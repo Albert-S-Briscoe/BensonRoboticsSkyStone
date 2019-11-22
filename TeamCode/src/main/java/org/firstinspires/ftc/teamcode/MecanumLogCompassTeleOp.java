@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMUImpl;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -52,13 +53,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorMRCompass;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.util.Locale;
+
 @TeleOp(name="TeleOp_Compass", group="Linear Opmode")
 public class MecanumLogCompassTeleOp extends LinearOpMode {
 
-    private BNO055IMU           compass = hardwareMap.get(BNO055IMU.class, "compass");
-    Orientation             lastAngles = new Orientation();
-    double globalAngle;
+    BNO055IMU imu;
 
+    Orientation angles;
 
     @Override
     public void runOpMode() {
@@ -72,25 +74,21 @@ public class MecanumLogCompassTeleOp extends LinearOpMode {
         DcMotor           rightback = hardwareMap.get(DcMotor.class, "RB_drive");
         DistanceSensor  sensorRange = hardwareMap.get(DistanceSensor .class, "sensor_range");
         DigitalChannel        limit = hardwareMap.get(DigitalChannel.class, "limit");
-        //CompassSensor       compass = hardwareMap.get(CompassSensor.class, "compass");
         Servo               grabber = hardwareMap.get(Servo.class, "grabber");
         Servo              vertical = hardwareMap.get(Servo.class, "vertical");
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-
-        parameters.mode                = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled      = false;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
 
-
-        compass.initialize(parameters);
-
-        while (!isStopRequested() && !compass.isGyroCalibrated())
-        {
-            sleep(50);
-            idle();
-        }
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
 
         leftfront.setDirection(DcMotor.Direction.FORWARD);
@@ -128,15 +126,17 @@ public class MecanumLogCompassTeleOp extends LinearOpMode {
         boolean button = false;
         double V_pos;
 
-        double agl_frwd = getAngle();
+        double agl_frwd = 0;
 
         waitForStart();
         runtime.reset();
 
         while (opModeIsActive()) {
 
+            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
             if (gamepad1.x && Math.abs(LF_RB) + Math.abs(RF_LB) < .001 && Rotate < .001) {
-                agl_frwd = getAngle();
+                agl_frwd = formatAngle(angles.angleUnit, angles.firstAngle);
             }
 
             if (gamepad1.right_bumper | gamepad1.b) {
@@ -165,7 +165,7 @@ public class MecanumLogCompassTeleOp extends LinearOpMode {
             Rotate = gamepad1.right_stick_x;
             Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
             stickTotal = Radius + Math.abs(Rotate);
-            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - getAngle());
+            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - formatAngle(angles.angleUnit, angles.firstAngle));
             cosAngle = Math.cos(Angle);
             sinAngle = Math.sin(Angle);
 
@@ -206,34 +206,18 @@ public class MecanumLogCompassTeleOp extends LinearOpMode {
             // Show run time, wheel power and sensor values.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("range", "%.01f cm", sensorRange.getDistance(DistanceUnit.CM));
-            telemetry.addData("compass", "%.1f", getAngle());
+            telemetry.addData("compass", "%.1f", formatAngle(angles.angleUnit, angles.firstAngle));
             telemetry.addData("frontMotors", "left (%.2f), right (%.2f)", leftfrontPower, rightfrontPower);
             telemetry.addData("backMotors", "left (%.2f), right (%.2f)", leftbackPower, rightbackPower);
             telemetry.update();
         }
     }
 
-    private double getAngle()
-    {
-        // We experimentally determined the Z axis is the axis we want to use for heading angle.
-        // We have to process the angle because the imu works in euler angles so the Z axis is
-        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
-        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
-
-        Orientation angles = compass.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
-
-        if (deltaAngle < -180)
-            deltaAngle += 360;
-        else if (deltaAngle > 180)
-            deltaAngle -= 360;
-
-        globalAngle += deltaAngle;
-
-        lastAngles = angles;
-
-        return globalAngle;
+    double formatAngle(AngleUnit angleUnit, double angle) {
+        return AngleUnit.DEGREES.fromUnit(angleUnit, angle);
     }
 
+    /*String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }*/
 }
