@@ -67,13 +67,16 @@ public class autoParkA extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        drive.moveInches(180, 5, .65);
+        /*drive.moveInches(180, 5, .65);
         drive.moveInches(0, 5, .65);
         sleep(1000);
         drive.moveInches(90, 5, .65);
         drive.moveInches(270, 5, .65);
-        //drive.moveInches(0, 1, .65);
-        //drive.moveInches(90, 20, .65);
+        drive.rotate(90, .65);
+        drive.rotate(-90, .65);*/
+        drive.moveInches(0, 1, .65);
+        drive.moveInches(90, 20, .65);
+
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {

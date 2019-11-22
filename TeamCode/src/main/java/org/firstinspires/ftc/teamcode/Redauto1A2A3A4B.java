@@ -54,8 +54,8 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-@Autonomous(name="1A2A3A4B", group="Linear Opmode")
-public class auto1A2A3A4B extends LinearOpMode {
+@Autonomous(name="red1A2A3A4B", group="Linear Opmode")
+public class Redauto1A2A3A4B extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXfJetz/////AAABmfTftTQRKUq2u+iCzbuFm2wKhp5/qubTF+6xF9VBwMBiVi2lCwJbNrIAVofnUKke4/MjFtZROHGeelAgbQx6MjYX+qdX4vRB5z2PboepftoqvoZy3irQKQ2aKqNSbpN72hI/tI2wluN0xqC6KThtMURH0EuvUf8VcGDfmuXiA/uP00/2dsYhIMhxBJCmBq0AG5jMWi8MnHJDZwnoYLdcliKB7rvNTUDbf1fzxRzf9QHgB2u+invzPou7q8ncAsD5GdXFfA/CiYmR65JKXDOE0wHoc8FxvrzUIRCQ2geSypo7eY5q/STJvqPmjoj33CQFHl0hKMx05QwwsABdlIZvfLLbjA3VH2HO4dcv+OOoElws";
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
@@ -112,7 +112,7 @@ public class auto1A2A3A4B extends LinearOpMode {
         final double speed_slow = .35;
         final double speed_norm = .35;
         final double speed_fast = 1;
-        final int field_side = 1;// -1 = red, 1 = blue
+        final int field_side = -1;// -1 = red, 1 = blue
 
         int inches_to_move;
 

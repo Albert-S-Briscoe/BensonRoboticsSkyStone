@@ -139,9 +139,9 @@ public class VuforiaTFTest extends LinearOpMode {
     private float phoneYRotate    = 0;
     private float phoneZRotate    = 0;
 
-    private static final String TFOD_MODEL_ASSET = "Skystone_Old.tflite";
-    private static final String LABEL_FIRST_ELEMENT = "stone";
-    private static final String LABEL_SECOND_ELEMENT = "SkyStone";
+    private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
+    private static final String LABEL_FIRST_ELEMENT = "SkyStone";
+    //private static final String LABEL_SECOND_ELEMENT = "SkyStone";
 
     private TFObjectDetector tfod;
 
@@ -399,7 +399,7 @@ public class VuforiaTFTest extends LinearOpMode {
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minimumConfidence = 0.6;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT);//, LABEL_SECOND_ELEMENT);
     }
 
 }

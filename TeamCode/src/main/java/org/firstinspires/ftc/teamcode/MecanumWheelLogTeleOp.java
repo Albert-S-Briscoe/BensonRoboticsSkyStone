@@ -118,7 +118,7 @@ public class MecanumWheelLogTeleOp extends LinearOpMode {
             double y = -gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
             double Rotate = gamepad1.right_stick_x;
-            double logCurve = 15;
+            double logCurve = 50;
             double Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
             double stickTotal = Radius + Math.abs(Rotate);
             double Angle = Math.atan2(y, x) - Math.PI / 4;

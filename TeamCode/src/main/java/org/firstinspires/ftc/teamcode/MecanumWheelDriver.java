@@ -30,9 +30,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 
 /**     put the following code inside runOpMode()
 
@@ -48,14 +52,16 @@ public class MecanumWheelDriver {
 
     final double COUNTS_PER_REVOLUTION = 288;
     final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    final double ROBOT_DIAMETER_INCHES = 22.5;
+    final double ROBOT_DIAMETER_INCHES = 23;
     final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.14159);
     final double COUNTS_PER_DEGREE = ((ROBOT_DIAMETER_INCHES * 3.14159) / 360) * COUNTS_PER_INCH;
+    final double turnAccrate = 1;
 
     public DcMotor leftfront = null;
     public DcMotor rightfront = null;
     public DcMotor leftback = null;
     public DcMotor rightback = null;
+    RobotHardware H = new RobotHardware();
     ElapsedTime runtime = new ElapsedTime();
 
     public void move(double Angle_Degrees, double Radius, double Rotate) {
@@ -161,6 +167,21 @@ public class MecanumWheelDriver {
 
     public void rotate(int Degrees, double speed) {
 
+        H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        double Target = FindTargetDeg(AngleUnit.DEGREES.fromUnit(H.angles.angleUnit, H.angles.firstAngle), Degrees);
+        int drect = Range.clip(Degrees, -1, 1);
+
+        do {
+            H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+            leftfront.setPower(-speed * drect);
+            rightfront.setPower(speed * drect);
+            leftback.setPower(-speed * drect);
+            rightback.setPower(speed * drect);
+
+        } while (AngleUnit.DEGREES.fromUnit(H.angles.angleUnit, H.angles.firstAngle) > Target - turnAccrate && AngleUnit.DEGREES.fromUnit(H.angles.angleUnit, H.angles.firstAngle) < Target + turnAccrate);
+
+        /*
         int Lefttarget = (int)(Degrees * COUNTS_PER_DEGREE);
         int Righttarget = -((int)(Degrees * COUNTS_PER_DEGREE));
 
@@ -191,7 +212,7 @@ public class MecanumWheelDriver {
         leftfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
     }
 
     public void init(HardwareMap HW) {
@@ -224,5 +245,15 @@ public class MecanumWheelDriver {
             leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+    }
+
+    private double FindTargetDeg(double DegCurrent, double addDeg) {
+        double output = DegCurrent + addDeg;
+        if (output > 180 ) {
+            output -= 360;
+        } else if (output < -180) {
+            output += 360;
+        }
+        return output;
     }
 }
