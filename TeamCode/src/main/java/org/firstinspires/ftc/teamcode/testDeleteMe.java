@@ -5,4 +5,5 @@ public class testDeleteMe {
     asdfasdf this is not valid code
             asdfasdfasdf
     asdfasdfasdf
+                    asdfasdfasdf
 }
