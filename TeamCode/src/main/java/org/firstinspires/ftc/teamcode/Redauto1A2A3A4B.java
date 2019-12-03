@@ -275,7 +275,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                 case 1: // move forward to stones (1A)
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
-                    while (H.sensorRange.getDistance(DistanceUnit.MM) > 355) {
+                    while (H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
                     drive.move(0, speed_norm, 0);
                     }
                     drive.stop();
@@ -325,7 +325,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
                     H.grabber.setPosition(1);
-                    while (H.sensorRange.getDistance(DistanceUnit.MM) > 185) {//   <----------------
+                    while (H.FrontRange.getDistance(DistanceUnit.MM) > 185) {//   <----------------
                         drive.move(0, speed_norm, 0);
                     }
                     drive.stop();
@@ -339,7 +339,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     H.vertical.setPosition(1);
                     sleep(27000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
-                    drive.moveInches(0, 2, speed_norm);
+                    drive.moveInches(0, 2, speed_norm, -1);
                     H.vertical.setPosition(1);
                     sleep(10000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
@@ -348,14 +348,14 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     H.vertical.setPosition(0);
                     sleep(36000 / degPerSec);
                     H.vertical.setPosition(.5);
-                    drive.moveInches(180, 3, speed_norm);
+                    drive.moveInches(180, 3, speed_norm, -1);
                     mode = 4;
                     break;
                 case 4:
                     drive.rotate(90 * field_side, speed_norm);
-                    inches_to_move = 96 - ((int) H.sensorRange.getDistance(DistanceUnit.INCH));
+                    inches_to_move = 96 - ((int) H.FrontRange.getDistance(DistanceUnit.INCH));
                     //drive.rotate(180, speed_norm);
-                    drive.moveInches(180, inches_to_move, speed_fast);
+                    drive.moveInches(180, inches_to_move, speed_fast, -1);
                     mode = 5;
                     break;
                 /*case 4: // navigate to foundation (2A)
@@ -400,12 +400,12 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     mode = 5;*/
                 case 5: // place skystone
                     drive.rotate(-90 * field_side, speed_norm);
-                    drive.moveInches(0, 7, speed_norm);
+                    drive.moveInches(0, 7, speed_norm, -1);
                     H.vertical.setPosition(1);
                     sleep(25000  / degPerSec);//                                            <-----------------
                     H.vertical.setPosition(.5);
                     H.grabber.setPosition(1);
-                    drive.moveInches(180, 4, speed_slow);
+                    drive.moveInches(180, 4, speed_slow, -1);
                     H.vertical.setPosition(0);
                     sleep(25000  / degPerSec);//                                            <-----------------
                     H.vertical.setPosition(.5);
@@ -428,10 +428,10 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     drive.stop();
                     mode = 8;*/
                 case 8: // park (4B)
-                    drive.moveInches(180, 5, speed_norm);
+                    drive.moveInches(180, 5, speed_norm, -1);
                     drive.rotate(-90 * field_side, speed_fast);
-                    inches_to_move = 64 - ((int) H.sensorRange.getDistance(DistanceUnit.INCH));
-                    drive.moveInches(180, inches_to_move, speed_norm);
+                    inches_to_move = 64 - ((int) H.FrontRange.getDistance(DistanceUnit.INCH));
+                    drive.moveInches(180, inches_to_move, speed_norm, -1);
                     drive.stop();
                     mode = 9;
                     break;
@@ -441,10 +441,10 @@ public class Redauto1A2A3A4B extends LinearOpMode {
 
         targetsSkyStone.deactivate();
         H.vertical.setPosition(.5);
-        drive.leftfront.setPower(0);
-        drive.rightfront.setPower(0);
-        drive.leftback.setPower(0);
-        drive.rightback.setPower(0);
+        H.leftfront.setPower(0);
+        H.rightfront.setPower(0);
+        H.leftback.setPower(0);
+        H.rightback.setPower(0);
 
     }
 
@@ -452,7 +452,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minimumConfidence = 0.7;
+        tfodParameters.minimumConfidence = 0.8;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
     }

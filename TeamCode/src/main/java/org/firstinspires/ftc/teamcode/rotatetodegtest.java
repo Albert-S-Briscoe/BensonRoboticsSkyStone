@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
@@ -47,9 +48,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="auto park B", group="Linear Opmode")
+@TeleOp(name="rotate to deg", group="Linear Opmode")
 //@Disabled
-public class autoParkB extends LinearOpMode {
+public class rotatetodegtest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -66,12 +67,21 @@ public class autoParkB extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        drive.moveInches(0, 25, .65, -1);
-        drive.moveInches(80, 20, .65, -1);
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+            if (gamepad1.dpad_up) {
+                drive.rotateToDeg(0, .65);
+            } else if (gamepad1.dpad_right) {
+                drive.rotateToDeg(-90, .65);
+            } else if (gamepad1.dpad_down) {
+                drive.rotateToDeg(180, .65);
+            } else if (gamepad1.dpad_left) {
+                drive.rotateToDeg(90, .65);
+            }
+
             telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("heading", "%.3f", drive.H.getheading());
             telemetry.update();
         }
     }

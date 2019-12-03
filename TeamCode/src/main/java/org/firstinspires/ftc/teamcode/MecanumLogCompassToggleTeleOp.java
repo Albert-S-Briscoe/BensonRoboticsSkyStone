@@ -29,136 +29,77 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @TeleOp(name="TeleOp Compass Toggle", group="Linear Opmode")
 public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
-
-    BNO055IMU imu;
-
-    Orientation angles;
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+        ////////////////////////////// Init //////////////////////////////
 
         ElapsedTime         runtime = new ElapsedTime();
-        DcMotor           leftfront = hardwareMap.get(DcMotor.class, "LF_drive");
-        DcMotor          rightfront = hardwareMap.get(DcMotor.class, "RF_drive");
-        DcMotor            leftback = hardwareMap.get(DcMotor.class, "LB_drive");
-        DcMotor           rightback = hardwareMap.get(DcMotor.class, "RB_drive");
-        DistanceSensor  sensorRange = hardwareMap.get(DistanceSensor .class, "sensor_range");
-        DigitalChannel        limit = hardwareMap.get(DigitalChannel.class, "limit");
-        Servo               grabber = hardwareMap.get(Servo.class, "grabber");
-        Servo              vertical = hardwareMap.get(Servo.class, "vertical");
-        Servo                     L = hardwareMap.get(Servo.class, "GrabberLeft");
-        Servo                     R = hardwareMap.get(Servo.class, "GrabberRight");
+        RobotHardware H = new RobotHardware();
+        H.init(hardwareMap);
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled      = true;
-        parameters.loggingTag          = "IMU";
-
-        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
-        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
-        // and named "imu".
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-
-
-        leftfront.setDirection(DcMotor.Direction.FORWARD);
-        rightfront.setDirection(DcMotor.Direction.REVERSE);
-        leftback.setDirection(DcMotor.Direction.FORWARD);
-        rightback.setDirection(DcMotor.Direction.REVERSE);
-
-        leftfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
-        limit.setMode(DigitalChannel.Mode.INPUT);
+        ////////////////////////////// Init Variables //////////////////////////////
 
         double leftfrontPower;
         double rightfrontPower;
         double leftbackPower;
         double rightbackPower;
 
-        final double logCurve = 15;
+        double LF_RB;  //leftfront and rightback motors
+        double RF_LB;  //rightfront and leftback motors
+
+        final double logCurve = 35;
+
         double y;
         double x;
-        double Rotate = 0;
+        double Rotate;
         double Radius;
         double stickTotal;
+        double multiplier;
         double Angle;
         double cosAngle;
         double sinAngle;
-        double LF_RB = 0;  //leftfront and rightback motors
-        double RF_LB = 0;  //rightfront and leftback motors
-        double multiplier;
+
         boolean slowDown = false;
         boolean speedButton = false;
-
-
+        boolean useCompass = true;
+        boolean compassButton = false;
+        boolean vertPosButton = false;
         double  position = 1;
-        boolean button = false;
         double V_pos;
 
-        double agl_frwd = 0;
+        double agl_frwd = 180;
+        double heading = 0;
 
         waitForStart();
         runtime.reset();
 
         while (opModeIsActive()) {
 
-            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-            if (gamepad1.right_bumper | gamepad1.b) {
-                if (!button) {
-                    if (position == 1) {
-                        position = 0;
-                    } else {
-                        position = 1;
-                    }
-                    button = true;
-                }
-            } else if (button) {
-                button = false;
-            }
-            grabber.setPosition(position);
-
-            if (!limit.getState()) {
-                V_pos = (gamepad1.left_trigger + 1) / 2;
-            } else {
-                V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
-            }
-            vertical.setPosition(V_pos);
+            ////////////////////////////// Set Variables //////////////////////////////
 
             y = -gamepad1.left_stick_y;
             x = gamepad1.left_stick_x;
             Rotate = gamepad1.right_stick_x;
-            Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
+            //Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
+            Radius = -((Math.log10((-Range.clip(Math.hypot(x, y), -1, 1) + 1 + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1)) + 1;
             stickTotal = Radius + Math.abs(Rotate);
-            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - formatAngle(angles.angleUnit, angles.firstAngle));
+            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - heading);
             cosAngle = Math.cos(Angle);
             sinAngle = Math.sin(Angle);
+
+            ////////////////////////////// Mecanum Wheel Stuff //////////////////////////////
 
             if (Math.abs(cosAngle) > Math.abs(sinAngle)) {   //scale the motor's speed so that at least one of them = 1
                 multiplier = 1 / Math.abs(cosAngle);
@@ -182,6 +123,58 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
                 rightbackPower = rightbackPower / stickTotal;
             }
 
+            ////////////////////////////// Buttons //////////////////////////////
+
+            if (!H.limit.getState()) {
+                V_pos = (gamepad1.left_trigger + 1) / 2;
+            } else {
+                V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
+            }
+            H.vertical.setPosition(V_pos);
+
+            if (gamepad1.right_bumper | gamepad1.b) {
+                if (!vertPosButton) {
+                    if (position == 1) {
+                        position = 0;
+                    } else {
+                        position = 1;
+                    }
+                    vertPosButton = true;
+                }
+            } else {
+                vertPosButton = false;
+            }
+            H.grabber.setPosition(position);
+
+            if (gamepad1.dpad_up) {
+                H.L.setPosition(0);
+                H.R.setPosition(1);
+            } else if (gamepad1.dpad_down) {
+                H.L.setPosition(1);
+                H.R.setPosition(0);
+            }
+
+            if (gamepad1.y) {
+                if (!compassButton) {
+                    useCompass = !useCompass;
+                    compassButton = true;
+                }
+            } else {
+                compassButton = false;
+            }
+
+            if (useCompass) {
+                heading = H.getheading();
+
+            } else {
+                heading = agl_frwd;
+            }
+
+            if (gamepad1.x && stickTotal < .075 && useCompass) {
+                agl_frwd = heading;
+            }
+
+
             if (gamepad1.left_bumper | gamepad1.left_stick_button) {
                 if (!speedButton) {
                     speedButton = true;
@@ -191,45 +184,29 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
                 speedButton = false;
             }
 
-            if (gamepad1.dpad_up) {
-                L.setPosition(0);
-                R.setPosition(1);
-            } else if (gamepad1.dpad_down) {
-                L.setPosition(1);
-                R.setPosition(0);
-            }
-
             if (slowDown) {
-                leftfront.setPower(leftfrontPower / 2);
-                rightfront.setPower(rightfrontPower / 2);//lower servo a little
-                leftback.setPower(leftbackPower / 2);
-                rightback.setPower(rightbackPower / 2);
+                H.leftfront.setPower(leftfrontPower / 2);
+                H.rightfront.setPower(rightfrontPower / 2);
+                H.leftback.setPower(leftbackPower / 2);
+                H.rightback.setPower(rightbackPower / 2);
             } else {
-                leftfront.setPower(leftfrontPower);
-                rightfront.setPower(rightfrontPower);//lower servo a little
-                leftback.setPower(leftbackPower);
-                rightback.setPower(rightbackPower);
+                H.leftfront.setPower(leftfrontPower);
+                H.rightfront.setPower(rightfrontPower);
+                H.leftback.setPower(leftbackPower);
+                H.rightback.setPower(rightbackPower);
             }
 
-            if (gamepad1.x && stickTotal < .01) {
-                agl_frwd = formatAngle(angles.angleUnit, angles.firstAngle);
-            }
+            ////////////////////////////// Telemetry //////////////////////////////
 
-            // Show run time, wheel power and sensor values.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("range", "%.01f cm", sensorRange.getDistance(DistanceUnit.CM));
-            telemetry.addData("compass", "%.1f", formatAngle(angles.angleUnit, angles.firstAngle));
+            telemetry.addData("front", "%.01f cm", H.FrontRange.getDistance(DistanceUnit.CM));
+            telemetry.addData("back", "%.01f cm", H.BackRange.getDistance(DistanceUnit.CM));
+            telemetry.addData("heading", "%.1f", heading);
+            telemetry.addData("speed", "%.3f", Radius);
+            telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
             telemetry.addData("frontMotors", "left (%.2f), right (%.2f)", leftfrontPower, rightfrontPower);
             telemetry.addData("backMotors", "left (%.2f), right (%.2f)", leftbackPower, rightbackPower);
             telemetry.update();
         }
     }
-
-    double formatAngle(AngleUnit angleUnit, double angle) {
-        return AngleUnit.DEGREES.fromUnit(angleUnit, angle);
-    }
-
-    /*String formatDegrees(double degrees){
-        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
-    }*/
 }
