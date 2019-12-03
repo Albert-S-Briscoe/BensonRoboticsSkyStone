@@ -172,18 +172,17 @@ public class MecanumWheelDriver {
         H.leftback.   setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.rightback.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        H.leftfront.  setPower(LF_RB * speed);
+        /*H.leftfront.  setPower(LF_RB * speed);
         H.rightfront. setPower(RF_LB * speed);
         H.leftback.   setPower(RF_LB * speed);
-        H.rightback.  setPower(LF_RB * speed);
-
+        H.rightback.  setPower(LF_RB * speed);*/
         while (H.leftfront.isBusy() && H.rightfront.isBusy() && H.leftback.isBusy() && H.rightback.isBusy()) {
             offset = FindDegOffset(H.getheading(), agl_frwd);
 
-            H.leftfront.  setPower(Range.clip(LF_RB * speed + offset/180, -1, 1));
-            H.rightfront. setPower(Range.clip(RF_LB * speed - offset/180, -1, 1));
-            H.leftback.   setPower(Range.clip(RF_LB * speed + offset/180, -1, 1));
-            H.rightback.  setPower(Range.clip(LF_RB * speed - offset/180, -1, 1));
+            H.leftfront.  setPower(Range.clip(LF_RB * speed - offset/45, -1, 1));
+            H.rightfront. setPower(Range.clip(RF_LB * speed + offset/45, -1, 1));
+            H.leftback.   setPower(Range.clip(RF_LB * speed - offset/45, -1, 1));
+            H.rightback.  setPower(Range.clip(LF_RB * speed + offset/45, -1, 1));
 
         }
 
@@ -196,6 +195,7 @@ public class MecanumWheelDriver {
         H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
     }
 
     public void rotate(int Degrees, double MaxSpeed) {

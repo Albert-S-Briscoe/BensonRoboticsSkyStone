@@ -78,8 +78,9 @@ public class rotatetodegtest extends LinearOpMode {
                 drive.rotateToDeg(180, .65);
             } else if (gamepad1.dpad_left) {
                 drive.rotateToDeg(90, .65);
+            } else if (gamepad1.y) {
+                drive.moveInches(0, 25, .65, 180);
             }
-
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("heading", "%.3f", drive.H.getheading());
             telemetry.update();
