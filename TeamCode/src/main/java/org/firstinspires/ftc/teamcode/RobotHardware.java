@@ -65,7 +65,8 @@ public class RobotHardware {
 
         limit.setMode(DigitalChannel.Mode.INPUT);
 
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)FrontRange;
+        Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor)FrontRange;
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)BackRange;
 
         leftfront.setDirection(DcMotor.Direction.FORWARD);
         rightfront.setDirection(DcMotor.Direction.REVERSE);
@@ -82,5 +83,15 @@ public class RobotHardware {
     public double getheading() {
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         return AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) + 180;
+    }
+
+    public void grab(boolean down) {
+        if (down) {
+            L.setPosition(1);
+            R.setPosition(0);
+        } else {
+            L.setPosition(0);
+            R.setPosition(1);
+        }
     }
 }

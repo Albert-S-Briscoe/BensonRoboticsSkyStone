@@ -48,9 +48,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="rotate to deg", group="Linear Opmode")
+@TeleOp(name="mecanum driver test", group="Linear Opmode")
 //@Disabled
-public class rotatetodegtest extends LinearOpMode {
+public class MecanumDriverTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -79,7 +79,13 @@ public class rotatetodegtest extends LinearOpMode {
             } else if (gamepad1.dpad_left) {
                 drive.rotateToDeg(90, .65);
             } else if (gamepad1.y) {
-                drive.moveInches(0, 25, .65, 180);
+                drive.moveInches(0, 25, .65, 0);
+            } else if (gamepad1.x) {
+                drive.moveInches(-90, 25, .65, 0);
+            } else if (gamepad1.a) {
+                drive.moveInches(180, 25, .65, 0);
+            } else if (gamepad1.b) {
+                drive.moveInches(90, 25, .65, 0);
             }
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("heading", "%.3f", drive.H.getheading());

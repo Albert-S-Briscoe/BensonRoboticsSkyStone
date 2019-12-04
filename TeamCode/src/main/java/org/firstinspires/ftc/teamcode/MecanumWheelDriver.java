@@ -73,6 +73,8 @@ public class MecanumWheelDriver {
          *
          * move() will run motors until another function that changes motor speed is called
          * you can use stop() to stop the motors
+         *
+         * if you want to move backwards you either set speed negative or Angle_degrees to 180
          */
 
         double leftfrontPower;
@@ -134,8 +136,10 @@ public class MecanumWheelDriver {
          * speed, the speed at which to run the motors
          * agl_frwd, the direction the robot should face while moving
          * it will be set automatically if less than 0
+         * forward = 0 degrees, right = 90, left = -90 back = 180
          *
-         * if you want to move backwards you either set speed negative or Angle_degrees to 180
+         * DO NOT set speed to a negative number
+         * if you want to move backwards set Angle_degrees to 180
          */
 
         double Angle = Math.toRadians(Angle_Degrees - 45);// - Math.PI / 4;
@@ -145,6 +149,11 @@ public class MecanumWheelDriver {
         double RF_LB;  //rightfront and leftback motors
         double multiplier;
         double offset;
+        double leftfrontPower;
+        double rightfrontPower;
+        double leftbackPower;
+        double rightbackPower;
+
         if (agl_frwd < 0) {
             agl_frwd = H.getheading();
         }
@@ -162,10 +171,15 @@ public class MecanumWheelDriver {
         int LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
         int RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
 
-        H.leftfront.  setTargetPosition(H.leftfront.getCurrentPosition() + LF_RBtarget);
-        H.rightfront. setTargetPosition(H.rightfront.getCurrentPosition() + RF_LBtarget);
-        H.leftback.   setTargetPosition(H.leftback.getCurrentPosition() + RF_LBtarget);
-        H.rightback.  setTargetPosition(H.rightback.getCurrentPosition() + LF_RBtarget);
+        int leftfrontTarget = H.leftfront.getCurrentPosition() + LF_RBtarget;
+        int rightfrontTarget = H.rightfront.getCurrentPosition() + RF_LBtarget;
+        int leftbackTarget = H.leftback.getCurrentPosition() + RF_LBtarget;
+        int rightbackTarget = H.rightback.getCurrentPosition() + LF_RBtarget;
+
+        H.leftfront.  setTargetPosition(H.leftfront.  getCurrentPosition() + LF_RBtarget);
+        H.rightfront. setTargetPosition(H.rightfront. getCurrentPosition() + RF_LBtarget);
+        H.leftback.   setTargetPosition(H.leftback.   getCurrentPosition() + RF_LBtarget);
+        H.rightback.  setTargetPosition(H.rightback.  getCurrentPosition() + LF_RBtarget);
 
         H.leftfront.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.rightfront. setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -177,12 +191,31 @@ public class MecanumWheelDriver {
         H.leftback.   setPower(RF_LB * speed);
         H.rightback.  setPower(LF_RB * speed);*/
         while (H.leftfront.isBusy() && H.rightfront.isBusy() && H.leftback.isBusy() && H.rightback.isBusy()) {
-            offset = FindDegOffset(H.getheading(), agl_frwd);
+            offset = FindDegOffset(H.getheading(), agl_frwd + 180);
 
-            H.leftfront.  setPower(Range.clip(LF_RB * speed - offset/45, -1, 1));
-            H.rightfront. setPower(Range.clip(RF_LB * speed + offset/45, -1, 1));
-            H.leftback.   setPower(Range.clip(RF_LB * speed - offset/45, -1, 1));
-            H.rightback.  setPower(Range.clip(LF_RB * speed + offset/45, -1, 1));
+            leftfrontPower = LF_RB * speed - offset/45;
+            rightfrontPower = RF_LB * speed + offset/45;
+            leftbackPower = RF_LB * speed - offset/45;
+            rightbackPower = LF_RB * speed + offset/45;
+
+            if (LF_RB > RF_LB) {
+                if (offset > 0) {
+                    multiplier = 1/Math.abs(rightbackPower);
+                } else {
+                    multiplier = 1/Math.abs(leftfrontPower);
+                }
+            } else {
+                if (offset > 0) {
+                    multiplier = 1/Math.abs(rightfrontPower);
+                } else {
+                    multiplier = 1/Math.abs(leftbackPower);
+                }
+            }
+
+            H.leftfront.  setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
+            H.rightfront. setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
+            H.leftback.   setPower(Range.clip(leftbackPower * multiplier, -1, 1));
+            H.rightback.  setPower(Range.clip(rightbackPower * multiplier, -1, 1));
 
         }
 
@@ -195,6 +228,40 @@ public class MecanumWheelDriver {
         H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        /*while (H.leftfront.getCurrentPosition() != leftfrontTarget && H.rightfront.getCurrentPosition() != rightfrontTarget && H.leftback.getCurrentPosition() != leftbackTarget && H.rightback.getCurrentPosition() != rightbackTarget) {
+            offset = FindDegOffset(H.getheading(), agl_frwd + 180);
+
+            leftfrontPower = LF_RB * speed - offset/45;
+            rightfrontPower = RF_LB * speed + offset/45;
+            leftbackPower = RF_LB * speed - offset/45;
+            rightbackPower = LF_RB * speed + offset/45;
+
+            if (LF_RB > RF_LB) {
+                if (offset > 0) {
+                    multiplier = 1/Math.abs(rightbackPower);
+                } else {
+                    multiplier = 1/Math.abs(leftfrontPower);
+                }
+            } else {
+                if (offset > 0) {
+                    multiplier = 1/Math.abs(rightfrontPower);
+                } else {
+                    multiplier = 1/Math.abs(leftbackPower);
+                }
+            }
+
+            H.leftfront.  setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
+            H.rightfront. setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
+            H.leftback.   setPower(Range.clip(leftbackPower * multiplier, -1, 1));
+            H.rightback.  setPower(Range.clip(rightbackPower * multiplier, -1, 1));
+
+        }
+
+        H.leftfront.  setPower(0);
+        H.rightfront. setPower(0);
+        H.leftback.   setPower(0);
+        H.rightback.  setPower(0);*/
 
     }
 
@@ -361,7 +428,9 @@ public class MecanumWheelDriver {
 
     private double FindDegOffset(double DegCurrent, double TargetDeg) {
 
-        /**Finds the angle between current degree and the target degree
+        /**DegCurrent, the current degree of the robot value between 0 and 360
+         * TargetDeg, the degree with which to find the offset
+         * Finds the angle between current degree and the target degree
          * returns a value between -180 and 180
          * output will be negative if the current degree is left of the target, and positive on the right
          *    0
