@@ -127,6 +127,8 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
 
             if (!H.limit.getState()) {
                 V_pos = (gamepad1.left_trigger + 1) / 2;
+            } else if (H.vertpos.getVoltage() < .15 ) {
+                V_pos = (1 - gamepad1.right_trigger) / 2;
             } else {
                 V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
             }
@@ -147,11 +149,9 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             H.grabber.setPosition(position);
 
             if (gamepad1.dpad_up) {
-                H.L.setPosition(0);
-                H.R.setPosition(1);
+                H.grab(false);
             } else if (gamepad1.dpad_down) {
-                H.L.setPosition(1);
-                H.R.setPosition(0);
+                H.grab(true);
             }
 
             if (gamepad1.y) {
@@ -165,12 +165,11 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
 
             if (useCompass) {
                 heading = H.getheading();
-
             } else {
                 heading = agl_frwd;
             }
 
-            if (gamepad1.x && stickTotal < .075 && useCompass) {
+            if (gamepad1.x && stickTotal < 0.1) {
                 agl_frwd = heading;
             }
 
@@ -203,7 +202,8 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             telemetry.addData("back", "%.01f cm", H.BackRange.getDistance(DistanceUnit.CM));
             telemetry.addData("heading", "%.1f", heading);
             telemetry.addData("speed", "%.3f", Radius);
-            telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
+            telemetry.addData( "vartpos", "%.2f", H.vertpos.getVoltage());
+            //telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
             telemetry.addData("frontMotors", "left (%.2f), right (%.2f)", leftfrontPower, rightfrontPower);
             telemetry.addData("backMotors", "left (%.2f), right (%.2f)", leftbackPower, rightbackPower);
             telemetry.update();

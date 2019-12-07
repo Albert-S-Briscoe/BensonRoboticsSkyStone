@@ -35,92 +35,52 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-@Autonomous(name="red1A2A3A4B", group="Linear Opmode")
+@Autonomous(name="red_1A2A3A4B", group="Linear Opmode")
 public class Redauto1A2A3A4B extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXfJetz/////AAABmfTftTQRKUq2u+iCzbuFm2wKhp5/qubTF+6xF9VBwMBiVi2lCwJbNrIAVofnUKke4/MjFtZROHGeelAgbQx6MjYX+qdX4vRB5z2PboepftoqvoZy3irQKQ2aKqNSbpN72hI/tI2wluN0xqC6KThtMURH0EuvUf8VcGDfmuXiA/uP00/2dsYhIMhxBJCmBq0AG5jMWi8MnHJDZwnoYLdcliKB7rvNTUDbf1fzxRzf9QHgB2u+invzPou7q8ncAsD5GdXFfA/CiYmR65JKXDOE0wHoc8FxvrzUIRCQ2geSypo7eY5q/STJvqPmjoj33CQFHl0hKMx05QwwsABdlIZvfLLbjA3VH2HO4dcv+OOoElws";
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
-    private static final String LABEL_FIRST_ELEMENT = "Stone";
-    private static final String LABEL_SECOND_ELEMENT = "Skystone";
+    private static final String LABEL_FIRST_ELEMENT = "Skystone";
+    //private static final String LABEL_SECOND_ELEMENT = "Skystone";
 
+    private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
 
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
-    private static final boolean PHONE_IS_PORTRAIT = false;
-
-    private static final float mmPerInch        = 25.4f;
-    private static final float mmTargetHeight   = (6) * mmPerInch;          // the height of the center of the target image above the floor
-
-    // Constant for Stone Target
-    private static final float stoneZ = 2.00f * mmPerInch;
-
-    // Constants for the center support targets
-    private static final float bridgeZ = 6.42f * mmPerInch;
-    private static final float bridgeY = 23 * mmPerInch;
-    private static final float bridgeX = 5.18f * mmPerInch;
-    private static final float bridgeRotY = 59;                                 // Units are degrees
-    private static final float bridgeRotZ = 180;
-
-    // Constants for perimeter targets
-    private static final float halfField = 72 * mmPerInch;
-    private static final float quadField  = 36 * mmPerInch;
-
-    // Class Members
-    private OpenGLMatrix lastLocation = null;
-    private VuforiaLocalizer vuforia = null;
-    private boolean targetVisible = false;
-    private float phoneXRotate    = 0;
-    private float phoneYRotate    = 0;
-    private float phoneZRotate    = 0;
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    //final float servoGear = 15/125;//                                                  <<--------------------------
+    //final float servoGear = 15/125;
     //final long degPerSec = (long)((60/.14) * servoGear);
+
+    int mode = 1;
+
+    int objleft;
+    int objright;
+    int objcenter;
+    int offset;
+
+    final long degPerSec = 30;
+
+    //final double speed_slow = .35;
+    final double speed_norm = .35;
+    final double speed_fast = 1;
+    final int field_side = -1;// -1 = red, 1 = blue
+
+    //int inches_to_move;
 
     @Override
     public void runOpMode() {
 
-        int mode = 1;
-
-        int objleft;
-        int objright;
-        int objcenter;
-        int offset;
-
-        final long degPerSec = 30;
-
-        final double speed_slow = .35;
-        final double speed_norm = .35;
-        final double speed_fast = 1;
-        final int field_side = -1;// -1 = red, 1 = blue
-
-        int inches_to_move;
-
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection   = CAMERA_CHOICE;
@@ -138,136 +98,27 @@ public class Redauto1A2A3A4B extends LinearOpMode {
         RobotHardware H = new RobotHardware();
         H.init(hardwareMap);
 
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
-
-        VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
-        stoneTarget.setName("Stone Target");
-        VuforiaTrackable blueRearBridge = targetsSkyStone.get(1);
-        blueRearBridge.setName("Blue Rear Bridge");
-        VuforiaTrackable redRearBridge = targetsSkyStone.get(2);
-        redRearBridge.setName("Red Rear Bridge");
-        VuforiaTrackable redFrontBridge = targetsSkyStone.get(3);
-        redFrontBridge.setName("Red Front Bridge");
-        VuforiaTrackable blueFrontBridge = targetsSkyStone.get(4);
-        blueFrontBridge.setName("Blue Front Bridge");
-        VuforiaTrackable red1 = targetsSkyStone.get(5);
-        red1.setName("Red Perimeter 1");
-        VuforiaTrackable red2 = targetsSkyStone.get(6);
-        red2.setName("Red Perimeter 2");
-        VuforiaTrackable front1 = targetsSkyStone.get(7);
-        front1.setName("Front Perimeter 1");
-        VuforiaTrackable front2 = targetsSkyStone.get(8);
-        front2.setName("Front Perimeter 2");
-        VuforiaTrackable blue1 = targetsSkyStone.get(9);
-        blue1.setName("Blue Perimeter 1");
-        VuforiaTrackable blue2 = targetsSkyStone.get(10);
-        blue2.setName("Blue Perimeter 2");
-        VuforiaTrackable rear1 = targetsSkyStone.get(11);
-        rear1.setName("Rear Perimeter 1");
-        VuforiaTrackable rear2 = targetsSkyStone.get(12);
-        rear2.setName("Rear Perimeter 2");
-
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
-        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsSkyStone);
-
-        stoneTarget.setLocation(OpenGLMatrix
-                .translation(0, 0, stoneZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-
-        //Set the position of the bridge support targets with relation to origin (center of field)
-        blueFrontBridge.setLocation(OpenGLMatrix
-                .translation(-bridgeX, bridgeY, bridgeZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, bridgeRotY, bridgeRotZ)));
-
-        blueRearBridge.setLocation(OpenGLMatrix
-                .translation(-bridgeX, bridgeY, bridgeZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, -bridgeRotY, bridgeRotZ)));
-
-        redFrontBridge.setLocation(OpenGLMatrix
-                .translation(-bridgeX, -bridgeY, bridgeZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, -bridgeRotY, 0)));
-
-        redRearBridge.setLocation(OpenGLMatrix
-                .translation(bridgeX, -bridgeY, bridgeZ)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 0, bridgeRotY, 0)));
-
-        //Set the position of the perimeter targets with relation to origin (center of field)
-        red1.setLocation(OpenGLMatrix
-                .translation(quadField, -halfField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
-
-        red2.setLocation(OpenGLMatrix
-                .translation(-quadField, -halfField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180)));
-
-        front1.setLocation(OpenGLMatrix
-                .translation(-halfField, -quadField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90)));
-
-        front2.setLocation(OpenGLMatrix
-                .translation(-halfField, quadField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 90)));
-
-        blue1.setLocation(OpenGLMatrix
-                .translation(-quadField, halfField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
-
-        blue2.setLocation(OpenGLMatrix
-                .translation(quadField, halfField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0)));
-
-        rear1.setLocation(OpenGLMatrix
-                .translation(halfField, quadField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , -90)));
-
-        rear2.setLocation(OpenGLMatrix
-                .translation(halfField, -quadField, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-
-        if (CAMERA_CHOICE == BACK) {
-            phoneYRotate = -90;
-        } else {
-            phoneYRotate = 90;
-        }
-
-        // Rotate the phone vertical about the X axis if it's in portrait mode
-        if (PHONE_IS_PORTRAIT) {
-            phoneXRotate = 90 ;
-        }
-
-        final float CAMERA_FORWARD_DISPLACEMENT  = 4.0f * mmPerInch;   // eg: Camera is 4 Inches in front of robot center
-        final float CAMERA_VERTICAL_DISPLACEMENT = 8.0f * mmPerInch;   // eg: Camera is 8 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
-
-        OpenGLMatrix robotFromCamera = OpenGLMatrix
-                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
-
-        /**  Let all the trackable listeners know where the phone is.  */
-        for (VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
-        }
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
 
         waitForStart();
         runtime.reset();
 
-        while(H.limit.getState()) {
+        H.grab(false);
+
+        /*while(!isStopRequested() && H.limit.getState()) {
             H.vertical.setPosition(0);
         }
         H.vertical.setPosition(1);
         sleep(110000 / degPerSec);//                           <-----------------
-        H.vertical.setPosition(.5);
+        H.vertical.setPosition(.5);*/
 
-        while (opModeIsActive() && mode < 9) {
+        while (!isStopRequested() && mode < 9) {
 
             switch (mode) {
                 case 0: // Error
                     telemetry.addLine("There has been an Error!");
-                    telemetry.addLine("Now it's time for you to spend n hours debugging");
-                    telemetry.addLine("where n is a very very large number");
+                    telemetry.addLine("Now it's time for you to spend very very large number of hours debugging");
                     telemetry.update();
                     while (opModeIsActive()) {
                         idle();
@@ -275,17 +126,26 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                 case 1: // move forward to stones (1A)
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
-                    while (H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
-                    drive.move(0, speed_norm, 0);
+                    while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 355 || H.vertpos.getVoltage() > .5)) {
+                        if (H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
+                            drive.move(0, speed_norm, 0);
+                        } else {
+                            drive.stop();
+                        }
+                        if (H.vertpos.getVoltage() > .3) {
+                            H.vertical.setPosition(1);
+                        } else {
+                            H.vertical.setPosition(.5);
+                        }
                     }
+                    H.vertical.setPosition(.5);
                     drive.stop();
                     mode = 2;
                     break;
                 case 2: // looking for skystone
                     telemetry.addData("mode = ", mode);
-                    targetsSkyStone.activate();
-                    offset = -500 * field_side;
-                    while (!isStopRequested() && mode == 2 && runtime.seconds() < 10) {
+                    offset = 500;
+                    while (!isStopRequested() && mode == 2 && runtime.seconds() < 6) {
 
                         if (tfod != null) {
                             telemetry.addData("TFmode = ", mode);
@@ -303,6 +163,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                                         objleft = (int) recognition.getBottom();
                                         objcenter = (objleft + objright) / 2;
                                         offset = objcenter - 640;
+                                        break;
                                     }
                                     telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                                     telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
@@ -312,12 +173,13 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                                 }
                             }
                         }
-                        if (Math.abs(offset) < 40) {
+                        if (Math.abs(offset) < 25) {
                             drive.stop();
                             mode = 3;
+                        } else {
+                            drive.move(90 * field_side, speed_norm * -Range.clip(offset / 30, -1, 1), 0);
+                            telemetry.update();
                         }
-                        drive.move(90, speed_norm * -Range.clip(offset, -1, 1), 0);
-                        telemetry.update();
                     }
                     mode = 3;
                     break;
@@ -325,37 +187,70 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
                     H.grabber.setPosition(1);
-                    while (H.FrontRange.getDistance(DistanceUnit.MM) > 185) {//   <----------------
-                        drive.move(0, speed_norm, 0);
+                    while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 185 || H.vertpos.getVoltage() > .3)) {
+                        if (!isStopRequested() && H.FrontRange.getDistance(DistanceUnit.MM) > 185) {
+                            drive.move(0, speed_norm, 0);
+                        } else {
+                            drive.stop();
+                        }
+                        if (!isStopRequested() && H.vertpos.getVoltage() > .3) {
+                            H.vertical.setPosition(1);
+                        } else {
+                            H.vertical.setPosition(.5);
+                        }
                     }
                     drive.stop();
+                    H.vertical.setPosition(.5);
                     //lower servo a little
                     drive.RunWithEncoders(true);
+                    drive.moveInches(0, 2, speed_norm, 0);
+                    while (!isStopRequested() && H.vertpos.getVoltage() > .13) {
+                        H.vertical.setPosition(1);
+                    }
+                    H.vertical.setPosition(.5);
+                    H.grabber.setPosition(0);
+                    sleep(750); //wait for servo to move
+                    while (!isStopRequested() && H.vertpos.getVoltage() < .4) {
+                        H.vertical.setPosition(0);
+                    }
+                    H.vertical.setPosition(.5);
                     /*H.vertical.setPosition(1);
                     sleep(10000 / degPerSec);//                                     <--------------
                     H.vertical.setPosition(.5);*/
                     //drive.stop();
                     //lower the servo all the way
-                    H.vertical.setPosition(1);
+
+
+                    /*H.vertical.setPosition(1);
                     sleep(27000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
-                    drive.moveInches(0, 2, speed_norm, -1);
+                    drive.moveInches(0, 2, speed_norm, 0);
                     H.vertical.setPosition(1);
                     sleep(10000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
                     H.grabber.setPosition(0);
                     sleep(500); //wait for servo to move
                     H.vertical.setPosition(0);
-                    sleep(36000 / degPerSec);
-                    H.vertical.setPosition(.5);
-                    drive.moveInches(180, 3, speed_norm, -1);
+                    sleep(41000 / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    drive.moveInches(180, 1, speed_norm, 0);
                     mode = 4;
                     break;
-                case 4:
-                    drive.rotate(90 * field_side, speed_norm);
-                    inches_to_move = 96 - ((int) H.FrontRange.getDistance(DistanceUnit.INCH));
+                case 4: // navigate to foundation (2A)
+                    drive.rotateToDeg(90 * field_side, speed_norm);
+                    /*inches_to_move = 96 - (int)H.BackRange.getDistance(DistanceUnit.INCH);
+                    if (inches_to_move < 0 || inches_to_move > 90) {
+                        mode = 0;
+                        break;
+                    }*/
                     //drive.rotate(180, speed_norm);
-                    drive.moveInches(180, inches_to_move, speed_fast, -1);
+                    drive.move(0, speed_fast, 0);
+                    sleep(500);
+                    while (H.FrontRange.getDistance(DistanceUnit.INCH) > 28) {
+                        drive.moveWithGyro(0, speed_fast, 90 * field_side);
+                    }
+                    drive.stop();
+                    //drive.moveInches(0, inches_to_move, speed_fast, 90);
                     mode = 5;
                     break;
                 /*case 4: // navigate to foundation (2A)
@@ -399,47 +294,52 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     drive.stop();
                     mode = 5;*/
                 case 5: // place skystone
-                    drive.rotate(-90 * field_side, speed_norm);
-                    drive.moveInches(0, 7, speed_norm, -1);
-                    H.vertical.setPosition(1);
-                    sleep(25000  / degPerSec);//                                            <-----------------
-                    H.vertical.setPosition(.5);
+                    drive.rotateToDeg(0, speed_fast);
+                    drive.moveInches(0, 8, speed_norm, 0);
+                    /*H.vertical.setPosition(1);
+                    sleep(25000 / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    H.grab(true);
                     H.grabber.setPosition(1);
-                    drive.moveInches(180, 4, speed_slow, -1);
-                    H.vertical.setPosition(0);
-                    sleep(25000  / degPerSec);//                                            <-----------------
-                    H.vertical.setPosition(.5);
-                    mode = 8;
+                    sleep(750);
+                    //drive.moveInches(180, 4, speed_slow, -1);
+                    /*H.vertical.setPosition(0);
+                    sleep(25000  / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    mode = 7;
                     break;
                 /*case 6: // position and grab foundation
-                    drive.move(0, -speed_slow, 0);
-                    sleep(500);                                     //-----------
-                    drive.move(0, 0, speed_slow);
-                    sleep(2000);
-                    drive.move(0, -speed_slow, 0);
-                    sleep(500);                                     //-----------
-                    drive.stop();
-                    // grab base                                  <-----------------------------------
-                    mode = 7;
+                    drive.rotateToDeg(180, speed_fast);
+                    inches_to_move = 1 + (int)H.BackRange.getDistance(DistanceUnit.INCH);
+                    drive.moveInches(180, inches_to_move, speed_norm, 180);
+                    H.grab(true);
+                    sleep(500);
+                    mode = 7;*/
                 case 7: // move foundation (3A)
-                    while (H.sensorRange.getDistance(DistanceUnit.MM) > 355) {//    <------------
-                        drive.move(0, speed_norm, 0);
-                    }
+                    drive.move(90 * field_side, speed_fast, 0);
+                    sleep(750);
                     drive.stop();
-                    mode = 8;*/
+                    drive.setRampDown(1, 0.15);
+                    drive.rotate(75 * field_side, speed_fast);
+                    drive.setRampDown(0, 0);
+                    drive.move(0, speed_fast, 0);
+                    sleep(1300);
+                    drive.stop();
+                    //drive.moveInches(0, 12, speed_norm, -2);
+                    H.grab(false);
+                    mode = 8;
+                    break;
                 case 8: // park (4B)
-                    drive.moveInches(180, 5, speed_norm, -1);
-                    drive.rotate(-90 * field_side, speed_fast);
-                    inches_to_move = 64 - ((int) H.FrontRange.getDistance(DistanceUnit.INCH));
-                    drive.moveInches(180, inches_to_move, speed_norm, -1);
-                    drive.stop();
+                    //drive.moveInches(-90 * field_side, 7, speed_norm, -2);
+                    drive.move(-90 * field_side, speed_norm, 0);
+                    sleep(600);
+                    drive.moveInches(180, 40, speed_norm, 270);
                     mode = 9;
                     break;
             }
 
         }
 
-        targetsSkyStone.deactivate();
         H.vertical.setPosition(.5);
         H.leftfront.setPower(0);
         H.rightfront.setPower(0);
@@ -454,6 +354,6 @@ public class Redauto1A2A3A4B extends LinearOpMode {
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minimumConfidence = 0.8;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT);//, LABEL_SECOND_ELEMENT);
     }
 }

@@ -53,15 +53,16 @@ import com.qualcomm.robotcore.util.Range;
 
 public class MecanumWheelDriver {
 
-    final double COUNTS_PER_REVOLUTION = 288;
-    final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
+    private final double COUNTS_PER_REVOLUTION = 288;
+    private final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     //final double ROBOT_DIAMETER_INCHES = 23;
-    final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.14159);
+    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.14159);
     //final double COUNTS_PER_DEGREE = ((ROBOT_DIAMETER_INCHES * 3.14159) / 360) * COUNTS_PER_INCH;
 
-    final double turnAccrate = 1;
-    final double speedmin = 0.15;
-    final int rampDownAngl = 50;
+    private final double turnAccrate = 1;
+    private double speedmin = 0.15;
+    private int rampDownAngl = 50;
+    boolean selfcorrect = true;
 
     RobotHardware H = new RobotHardware();
 
@@ -118,6 +119,72 @@ public class MecanumWheelDriver {
         H.rightback.  setPower(rightbackPower);
     }
 
+    public void moveWithGyro(double Angle_Degrees, double Speed, double agl_frwd) {
+
+        /**Angle_Degrees, the angle relative to the robot that it should move
+         * Speed, the speed at which to run the motors
+         * Rotate, used to rotate the robot. can be set while moving
+         *
+         * move() will run motors until another function that changes motor speed is called
+         * you can use stop() to stop the motors
+         *
+         * if you want to move backwards you either set speed negative or Angle_degrees to 180
+         */
+
+        double leftfrontPower;
+        double rightfrontPower;
+        double leftbackPower;
+        double rightbackPower;
+
+        double Angle = Math.toRadians(Angle_Degrees - 45);
+        double cosAngle = Math.cos(Angle);
+        double sinAngle = -Math.sin(Angle);
+        double LF_RB;  //leftfront and rightback motors
+        double RF_LB;  //rightfront and leftback motors
+        double multiplier;
+        double offset;
+
+        if (agl_frwd == -1) {
+            agl_frwd = H.getheading();
+        }
+
+        if (Math.abs(cosAngle) > Math.abs(sinAngle)) {   //scale the motor's speed so that at least one of them = 1
+            multiplier = 1/Math.abs(cosAngle);
+            LF_RB = multiplier * cosAngle;
+            RF_LB = multiplier * sinAngle;
+        } else {
+            multiplier = 1/Math.abs(sinAngle);
+            LF_RB = multiplier * cosAngle;
+            RF_LB = multiplier * sinAngle;
+        }
+
+        offset = FindDegOffset(H.getheading(), agl_frwd + 180);
+
+        leftfrontPower = LF_RB * Speed - offset / 45;
+        rightfrontPower = RF_LB * Speed + offset / 45;
+        leftbackPower = RF_LB * Speed - offset / 45;
+        rightbackPower = LF_RB * Speed + offset / 45;
+
+        if (LF_RB > RF_LB) {
+            if (offset > 0) {
+                multiplier = 1 / Math.abs(rightbackPower);
+            } else {
+                multiplier = 1 / Math.abs(leftfrontPower);
+            }
+        } else {
+            if (offset > 0) {
+                multiplier = 1 / Math.abs(rightfrontPower);
+            } else {
+                multiplier = 1 / Math.abs(leftbackPower);
+            }
+        }
+
+        H.leftfront.setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
+        H.rightfront.setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
+        H.leftback.setPower(Range.clip(leftbackPower * multiplier, -1, 1));
+        H.rightback.setPower(Range.clip(rightbackPower * multiplier, -1, 1));
+    }
+
     public void stop() {
 
         /**stops all the motors
@@ -153,9 +220,13 @@ public class MecanumWheelDriver {
         double rightfrontPower;
         double leftbackPower;
         double rightbackPower;
+        selfcorrect = true;
 
-        if (agl_frwd < 0) {
+        if (agl_frwd == -1) {
             agl_frwd = H.getheading();
+            selfcorrect = true;
+        } else if (agl_frwd == -2) {
+            selfcorrect = false;
         }
 
         if (Math.abs(cosAngle) > Math.abs(sinAngle)) {   //scale the motor's speed so that at least one of them = 1
@@ -186,36 +257,39 @@ public class MecanumWheelDriver {
         H.leftback.   setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.rightback.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        /*H.leftfront.  setPower(LF_RB * speed);
+        H.leftfront.  setPower(LF_RB * speed);
         H.rightfront. setPower(RF_LB * speed);
         H.leftback.   setPower(RF_LB * speed);
-        H.rightback.  setPower(LF_RB * speed);*/
+        H.rightback.  setPower(LF_RB * speed);
+
         while (H.leftfront.isBusy() && H.rightfront.isBusy() && H.leftback.isBusy() && H.rightback.isBusy()) {
-            offset = FindDegOffset(H.getheading(), agl_frwd + 180);
+            if (selfcorrect) {
+                offset = FindDegOffset(H.getheading(), agl_frwd + 180);
 
-            leftfrontPower = LF_RB * speed - offset/45;
-            rightfrontPower = RF_LB * speed + offset/45;
-            leftbackPower = RF_LB * speed - offset/45;
-            rightbackPower = LF_RB * speed + offset/45;
+                leftfrontPower = LF_RB * speed - offset / 45;
+                rightfrontPower = RF_LB * speed + offset / 45;
+                leftbackPower = RF_LB * speed - offset / 45;
+                rightbackPower = LF_RB * speed + offset / 45;
 
-            if (LF_RB > RF_LB) {
-                if (offset > 0) {
-                    multiplier = 1/Math.abs(rightbackPower);
+                if (LF_RB > RF_LB) {
+                    if (offset > 0) {
+                        multiplier = 1 / Math.abs(rightbackPower);
+                    } else {
+                        multiplier = 1 / Math.abs(leftfrontPower);
+                    }
                 } else {
-                    multiplier = 1/Math.abs(leftfrontPower);
+                    if (offset > 0) {
+                        multiplier = 1 / Math.abs(rightfrontPower);
+                    } else {
+                        multiplier = 1 / Math.abs(leftbackPower);
+                    }
                 }
-            } else {
-                if (offset > 0) {
-                    multiplier = 1/Math.abs(rightfrontPower);
-                } else {
-                    multiplier = 1/Math.abs(leftbackPower);
-                }
+
+                H.leftfront.setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
+                H.rightfront.setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
+                H.leftback.setPower(Range.clip(leftbackPower * multiplier, -1, 1));
+                H.rightback.setPower(Range.clip(rightbackPower * multiplier, -1, 1));
             }
-
-            H.leftfront.  setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
-            H.rightfront. setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
-            H.leftback.   setPower(Range.clip(leftbackPower * multiplier, -1, 1));
-            H.rightback.  setPower(Range.clip(rightbackPower * multiplier, -1, 1));
 
         }
 
@@ -344,7 +418,7 @@ public class MecanumWheelDriver {
          * it will never turn more than 180 degrees
          * while running the robot can be intercepted and will still stop at the target degrees
          * a number of degrees before the target the robot will gradually slow down to the min speed
-         * both can be set at the top of the class as rampDownAngl and speedmin
+         * both can be set at the top of the class as rampDownAngl and speedmin or with the setRampDown() function
          * DO NOT input a negative MaxSpeed if you do the robot won't move and will be stuck in an infinite loop
          */
 
@@ -372,6 +446,24 @@ public class MecanumWheelDriver {
         H.rightfront. setPower(0);
         H.leftback.   setPower(0);
         H.rightback.  setPower(0);
+    }
+
+    public void setRampDown(int ramp_Down_Angle, double minimum_Speed) {
+        /**sets what angle to start slowing down in rotateToDeg() and rotate()
+         * and what the minimum speed should be, the robot may not go this speed if the ramp_Down_Angle is to low
+         * default: ramp_Down_Angle = 50, minimum_Speed = 0.15 set either to 0 to reset to default
+         * set ramp_Down_Angle to 1 for to not ramp down
+         */
+        if (ramp_Down_Angle <= 0) {
+            rampDownAngl = 50;
+        } else {
+            rampDownAngl = ramp_Down_Angle;
+        }
+        if (minimum_Speed <= 0) {
+            speedmin = 0.15;
+        } else {
+            speedmin = minimum_Speed;
+        }
     }
 
     public void init(HardwareMap HM) {

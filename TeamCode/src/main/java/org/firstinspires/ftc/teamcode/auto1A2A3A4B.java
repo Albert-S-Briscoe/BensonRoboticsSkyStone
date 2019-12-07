@@ -35,26 +35,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
-
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-@Autonomous(name="1A2A3A4B", group="Linear Opmode")
+@Autonomous(name="blue_1A2A3A4B", group="Linear Opmode")
 public class auto1A2A3A4B extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXfJetz/////AAABmfTftTQRKUq2u+iCzbuFm2wKhp5/qubTF+6xF9VBwMBiVi2lCwJbNrIAVofnUKke4/MjFtZROHGeelAgbQx6MjYX+qdX4vRB5z2PboepftoqvoZy3irQKQ2aKqNSbpN72hI/tI2wluN0xqC6KThtMURH0EuvUf8VcGDfmuXiA/uP00/2dsYhIMhxBJCmBq0AG5jMWi8MnHJDZwnoYLdcliKB7rvNTUDbf1fzxRzf9QHgB2u+invzPou7q8ncAsD5GdXFfA/CiYmR65JKXDOE0wHoc8FxvrzUIRCQ2geSypo7eY5q/STJvqPmjoj33CQFHl0hKMx05QwwsABdlIZvfLLbjA3VH2HO4dcv+OOoElws";
@@ -62,40 +50,37 @@ public class auto1A2A3A4B extends LinearOpMode {
     private static final String LABEL_FIRST_ELEMENT = "Skystone";
     //private static final String LABEL_SECOND_ELEMENT = "Skystone";
 
+    private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
 
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
 
-    private VuforiaLocalizer vuforia = null;
     private ElapsedTime runtime = new ElapsedTime();
 
     //final float servoGear = 15/125;
     //final long degPerSec = (long)((60/.14) * servoGear);
 
+    int mode = 1;
+
+    int objleft;
+    int objright;
+    int objcenter;
+    int offset;
+
+    final long degPerSec = 30;
+
+    //final double speed_slow = .35;
+    final double speed_norm = .35;
+    final double speed_fast = 1;
+    final int field_side = 1;// -1 = red, 1 = blue
+
+    //int inches_to_move;
+
     @Override
     public void runOpMode() {
 
-        int mode = 1;
-
-        int objleft;
-        int objright;
-        int objcenter;
-        int offset;
-
-        final long degPerSec = 30;
-
-        final double speed_slow = .35;
-        final double speed_norm = .35;
-        final double speed_fast = 1;
-        final int field_side = 1;// -1 = red, 1 = blue
-
-        int inches_to_move;
-
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection   = CAMERA_CHOICE;
@@ -113,15 +98,20 @@ public class auto1A2A3A4B extends LinearOpMode {
         RobotHardware H = new RobotHardware();
         H.init(hardwareMap);
 
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
         waitForStart();
         runtime.reset();
 
-        while(!isStopRequested() && H.limit.getState()) {
+        H.grab(false);
+
+        /*while(!isStopRequested() && H.limit.getState()) {
             H.vertical.setPosition(0);
         }
         H.vertical.setPosition(1);
         sleep(110000 / degPerSec);//                           <-----------------
-        H.vertical.setPosition(.5);
+        H.vertical.setPosition(.5);*/
 
         while (!isStopRequested() && mode < 9) {
 
@@ -136,16 +126,26 @@ public class auto1A2A3A4B extends LinearOpMode {
                 case 1: // move forward to stones (1A)
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
-                    while (!isStopRequested() && H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
-                    drive.move(0, speed_norm, 0);
-                    }
+                        while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 355 || H.vertpos.getVoltage() > .5)) {
+                            if (H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
+                                drive.move(0, speed_norm, 0);
+                            } else {
+                                drive.stop();
+                            }
+                            if (H.vertpos.getVoltage() > .3) {
+                                H.vertical.setPosition(1);
+                            } else {
+                                H.vertical.setPosition(.5);
+                            }
+                        }
+                    H.vertical.setPosition(.5);
                     drive.stop();
                     mode = 2;
                     break;
                 case 2: // looking for skystone
                     telemetry.addData("mode = ", mode);
                     offset = -500 * field_side;
-                    while (!isStopRequested() && mode == 2 && runtime.seconds() < 10) {
+                    while (!isStopRequested() && mode == 2 && runtime.seconds() < 6) {
 
                         if (tfod != null) {
                             telemetry.addData("TFmode = ", mode);
@@ -163,6 +163,7 @@ public class auto1A2A3A4B extends LinearOpMode {
                                         objleft = (int) recognition.getBottom();
                                         objcenter = (objleft + objright) / 2;
                                         offset = objcenter - 640;
+                                        break;
                                     }
                                     telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                                     telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
@@ -172,12 +173,13 @@ public class auto1A2A3A4B extends LinearOpMode {
                                 }
                             }
                         }
-                        if (Math.abs(offset) < 30) {
-                            drive.stop();
-                            mode = 3;
+                        if (Math.abs(offset) < 25) {
+                                drive.stop();
+                                mode = 3;
+                        } else {
+                            drive.move(90 * field_side, speed_norm * -Range.clip(offset / 30, -1, 1), 0);
+                            telemetry.update();
                         }
-                        drive.move(90, speed_norm * -Range.clip(offset, -1, 1), 0);
-                        telemetry.update();
                     }
                     mode = 3;
                     break;
@@ -185,18 +187,41 @@ public class auto1A2A3A4B extends LinearOpMode {
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
                     H.grabber.setPosition(1);
-                    while (!isStopRequested() && H.FrontRange.getDistance(DistanceUnit.MM) > 185) {//   <----------------
-                        drive.move(0, speed_norm, 0);
+                    while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 185 || H.vertpos.getVoltage() > .3)) {
+                        if (!isStopRequested() && H.FrontRange.getDistance(DistanceUnit.MM) > 185) {
+                            drive.move(0, speed_norm, 0);
+                        } else {
+                            drive.stop();
+                        }
+                        if (!isStopRequested() && H.vertpos.getVoltage() > .3) {
+                            H.vertical.setPosition(1);
+                        } else {
+                            H.vertical.setPosition(.5);
+                        }
                     }
                     drive.stop();
+                    H.vertical.setPosition(.5);
                     //lower servo a little
                     drive.RunWithEncoders(true);
+                    drive.moveInches(0, 2, speed_norm, 0);
+                    while (!isStopRequested() && H.vertpos.getVoltage() > .13) {
+                        H.vertical.setPosition(1);
+                    }
+                    H.vertical.setPosition(.5);
+                    H.grabber.setPosition(0);
+                    sleep(750); //wait for servo to move
+                    while (!isStopRequested() && H.vertpos.getVoltage() < .4) {
+                        H.vertical.setPosition(0);
+                    }
+                    H.vertical.setPosition(.5);
                     /*H.vertical.setPosition(1);
                     sleep(10000 / degPerSec);//                                     <--------------
                     H.vertical.setPosition(.5);*/
                     //drive.stop();
                     //lower the servo all the way
-                    H.vertical.setPosition(1);
+
+
+                    /*H.vertical.setPosition(1);
                     sleep(27000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
                     drive.moveInches(0, 2, speed_norm, 0);
@@ -206,9 +231,9 @@ public class auto1A2A3A4B extends LinearOpMode {
                     H.grabber.setPosition(0);
                     sleep(500); //wait for servo to move
                     H.vertical.setPosition(0);
-                    sleep(36000 / degPerSec);
-                    H.vertical.setPosition(.5);
-                    //drive.moveInches(180, 3, speed_norm, 0);
+                    sleep(41000 / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    drive.moveInches(180, 1, speed_norm, 0);
                     mode = 4;
                     break;
                 case 4: // navigate to foundation (2A)
@@ -219,8 +244,10 @@ public class auto1A2A3A4B extends LinearOpMode {
                         break;
                     }*/
                     //drive.rotate(180, speed_norm);
-                    while (H.FrontRange.getDistance(DistanceUnit.INCH) > 24) {
-                        drive.move(0, speed_fast, 0);
+                    drive.move(0, speed_fast, 0);
+                    sleep(500);
+                    while (H.FrontRange.getDistance(DistanceUnit.INCH) > 28) {
+                        drive.moveWithGyro(0, speed_fast, 90 * field_side);
                     }
                     drive.stop();
                     //drive.moveInches(0, inches_to_move, speed_fast, 90);
@@ -268,32 +295,45 @@ public class auto1A2A3A4B extends LinearOpMode {
                     mode = 5;*/
                 case 5: // place skystone
                     drive.rotateToDeg(0, speed_fast);
-                    drive.moveInches(0, 7, speed_norm, -1);
-                    H.vertical.setPosition(1);
-                    sleep(25000  / degPerSec);//                                            <-----------------
-                    H.vertical.setPosition(.5);
+                    drive.moveInches(0, 8, speed_norm, 0);
+                    /*H.vertical.setPosition(1);
+                    sleep(25000 / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    H.grab(true);
                     H.grabber.setPosition(1);
-                    drive.moveInches(180, 4, speed_slow, -1);
-                    H.vertical.setPosition(0);
-                    sleep(25000  / degPerSec);//                                            <-----------------
-                    H.vertical.setPosition(.5);
-                    mode = 6;
+                    sleep(750);
+                    //drive.moveInches(180, 4, speed_slow, -1);
+                    /*H.vertical.setPosition(0);
+                    sleep(25000  / degPerSec);
+                    H.vertical.setPosition(.5);*/
+                    mode = 7;
                     break;
-                case 6: // position and grab foundation
+                /*case 6: // position and grab foundation
                     drive.rotateToDeg(180, speed_fast);
-                    H.grab(false);
                     inches_to_move = 1 + (int)H.BackRange.getDistance(DistanceUnit.INCH);
                     drive.moveInches(180, inches_to_move, speed_norm, 180);
                     H.grab(true);
                     sleep(500);
-                    mode = 7;
+                    mode = 7;*/
                 case 7: // move foundation (3A)
-                    drive.rotateToDeg(-90, speed_fast);
+                    drive.move(90 * field_side, speed_fast, 0);
+                    sleep(750);
+                    drive.stop();
+                    drive.setRampDown(1, 0.15);
+                    drive.rotate(75 * field_side, speed_fast);
+                    drive.setRampDown(0, 0);
+                    drive.move(0, speed_fast, 0);
+                    sleep(1300);
+                    drive.stop();
+                    //drive.moveInches(0, 12, speed_norm, -2);
                     H.grab(false);
                     mode = 8;
+                    break;
                 case 8: // park (4B)
-                    drive.moveInches(180, 48, speed_norm, -90);
-                    drive.stop();
+                    //drive.moveInches(-90 * field_side, 7, speed_norm, -2);
+                    drive.move(-90 * field_side, speed_norm, 0);
+                    sleep(600);
+                    drive.moveInches(180, 40, speed_norm, 90 * field_side);
                     mode = 9;
                     break;
             }
