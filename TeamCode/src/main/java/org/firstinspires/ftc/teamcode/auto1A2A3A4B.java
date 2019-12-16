@@ -126,8 +126,8 @@ public class auto1A2A3A4B extends LinearOpMode {
                 case 1: // move forward to stones (1A)
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
-                        while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 355 || H.vertpos.getVoltage() > .5)) {
-                            if (H.FrontRange.getDistance(DistanceUnit.MM) > 355) {
+                        while (!isStopRequested() && (H.upperRange.getDistance(DistanceUnit.MM) > 355 || H.vertpos.getVoltage() > .5)) {
+                            if (H.upperRange.getDistance(DistanceUnit.MM) > 355) {
                                 drive.move(0, speed_norm, 0);
                             } else {
                                 drive.stop();
@@ -187,8 +187,8 @@ public class auto1A2A3A4B extends LinearOpMode {
                     telemetry.addData("mode = ", mode);
                     telemetry.update();
                     H.grabber.setPosition(1);
-                    while (!isStopRequested() && (H.FrontRange.getDistance(DistanceUnit.MM) > 185 || H.vertpos.getVoltage() > .3)) {
-                        if (!isStopRequested() && H.FrontRange.getDistance(DistanceUnit.MM) > 185) {
+                    while (!isStopRequested() && (H.upperRange.getDistance(DistanceUnit.MM) > 185 || H.vertpos.getVoltage() > .3)) {
+                        if (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 185) {
                             drive.move(0, speed_norm, 0);
                         } else {
                             drive.stop();
@@ -238,7 +238,7 @@ public class auto1A2A3A4B extends LinearOpMode {
                     break;
                 case 4: // navigate to foundation (2A)
                     drive.rotateToDeg(90 * field_side, speed_norm);
-                    /*inches_to_move = 96 - (int)H.BackRange.getDistance(DistanceUnit.INCH);
+                    /*inches_to_move = 96 - (int)H.lowerRange.getDistance(DistanceUnit.INCH);
                     if (inches_to_move < 0 || inches_to_move > 90) {
                         mode = 0;
                         break;
@@ -246,7 +246,7 @@ public class auto1A2A3A4B extends LinearOpMode {
                     //drive.rotate(180, speed_norm);
                     drive.move(0, speed_fast, 0);
                     sleep(500);
-                    while (H.FrontRange.getDistance(DistanceUnit.INCH) > 28) {
+                    while (H.upperRange.getDistance(DistanceUnit.INCH) > 28) {
                         drive.moveWithGyro(0, speed_fast, 90 * field_side);
                     }
                     drive.stop();
@@ -310,7 +310,7 @@ public class auto1A2A3A4B extends LinearOpMode {
                     break;
                 /*case 6: // position and grab foundation
                     drive.rotateToDeg(180, speed_fast);
-                    inches_to_move = 1 + (int)H.BackRange.getDistance(DistanceUnit.INCH);
+                    inches_to_move = 1 + (int)H.lowerRange.getDistance(DistanceUnit.INCH);
                     drive.moveInches(180, inches_to_move, speed_norm, 180);
                     H.grab(true);
                     sleep(500);

@@ -18,8 +18,8 @@ public class RobotHardware {
 
     ////////////////////////////// Sensors //////////////////////////////
 
-    public DistanceSensor FrontRange;
-    public DistanceSensor BackRange;
+    public DistanceSensor upperRange;
+    public DistanceSensor lowerRange;
     public AnalogInput    vertpos;
     public DigitalChannel limit;
     public BNO055IMU      imu;
@@ -52,8 +52,8 @@ public class RobotHardware {
 
         limit       = HM.get(DigitalChannel.class, "limit");
         vertpos     = HM.get(AnalogInput.class, "vert_pos");
-        FrontRange  = HM.get(DistanceSensor.class, "front_range");
-        BackRange   = HM.get(DistanceSensor.class, "back_range");
+        upperRange  = HM.get(DistanceSensor.class, "front_range");
+        lowerRange  = HM.get(DistanceSensor.class, "back_range");
         imu         = HM.get(BNO055IMU.class, "imu");
 
         ////////////////////////////// Parameters //////////////////////////////
@@ -65,8 +65,8 @@ public class RobotHardware {
 
         limit.setMode(DigitalChannel.Mode.INPUT);
 
-        Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor)FrontRange;
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)BackRange;
+        Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor) upperRange;
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) lowerRange;
 
         leftfront.setDirection(DcMotor.Direction.FORWARD);
         rightfront.setDirection(DcMotor.Direction.REVERSE);

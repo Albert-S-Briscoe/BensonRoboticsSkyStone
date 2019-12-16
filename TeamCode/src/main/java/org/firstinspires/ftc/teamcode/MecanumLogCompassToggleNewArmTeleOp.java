@@ -36,8 +36,8 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name="TeleOp Compass Toggle", group="Linear Opmode")
-public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
+@TeleOp(name="TeleOp Compass Toggle new arm", group="Linear Opmode")
+public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
@@ -60,6 +60,10 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
         double RF_LB;  //rightfront and leftback motors
 
         final double logCurve = 35;
+        final double zeroAngle = 0.12;
+        final double degreesPerVolt = 101;
+        final double armLength = 15;
+        final double armOffset = 2;
 
         double y;
         double x;
@@ -70,6 +74,12 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
         double Angle;
         double cosAngle;
         double sinAngle;
+
+        double armAngle;
+        double armPos;
+        double grabberToRobot;
+        double armMove = 0;
+        double armOffAngle;
 
         boolean slowDown = false;
         boolean speedButton = false;
@@ -98,6 +108,9 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - heading);
             cosAngle = Math.cos(Angle);
             sinAngle = Math.sin(Angle);
+            armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroAngle;
+            armPos = Math.sin(Math.toRadians(armAngle)) * armLength;
+            grabberToRobot = Math.cos(armAngle) * armLength - armOffset;
 
             ////////////////////////////// Mecanum Wheel Stuff //////////////////////////////
 
@@ -123,7 +136,37 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
                 rightbackPower = rightbackPower / stickTotal;
             }
 
+            ////////////////////////////// Move Arm //////////////////////////////
+
+            while (Math.abs(armMove - armPos) > 0.25) {
+
+                armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroAngle;
+                armPos = Math.sin(armAngle) / armLength;
+                armOffAngle = Math.abs(armAngle - Math.asin(armMove / armLength));
+
+                if (armPos > armMove) {
+                    H.vertical.setPosition(1 - 1 / (armOffAngle * 4));
+                } else {
+                    H.vertical.setPosition(0 + 1 / (armOffAngle * 4));
+                }
+            }
+            H.vertical.setPosition(0.5);
+
             ////////////////////////////// Buttons //////////////////////////////
+
+            if (gamepad1.y && armMove != 10.5) {
+                if (armMove == 0) {
+                    armMove = 2.5;
+                } else {
+                    armMove += 4;
+                }
+            } else if (gamepad1.a && armMove != 0) {
+                if (armMove == 2.5) {
+                    armMove = 0;
+                } else {
+                    armMove -= 4;
+                }
+            }
 
             if (!H.limit.getState()) {
                 V_pos = (gamepad1.left_trigger + 1) / 2;
@@ -134,7 +177,7 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             }
             H.vertical.setPosition(V_pos);
 
-            if (gamepad1.right_bumper | gamepad1.b) {
+            if (gamepad1.right_bumper) {
                 if (!vertPosButton) {
                     if (position == 1) {
                         position = 0;
@@ -154,7 +197,7 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
                 H.grab(true);
             }
 
-            if (gamepad1.y) {
+            if (gamepad1.dpad_right) {
                 if (!compassButton) {
                     useCompass = !useCompass;
                     compassButton = true;
@@ -169,10 +212,9 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
                 heading = agl_frwd;
             }
 
-            if (gamepad1.x && stickTotal < 0.1) {
+            if (gamepad1.start && stickTotal < 0.1) {
                 agl_frwd = heading;
             }
-
 
             if (gamepad1.left_bumper | gamepad1.left_stick_button) {
                 if (!speedButton) {
@@ -198,12 +240,13 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             ////////////////////////////// Telemetry //////////////////////////////
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("front", "%.01f cm", H.upperRange.getDistance(DistanceUnit.CM));
-            telemetry.addData("back", "%.01f cm", H.lowerRange.getDistance(DistanceUnit.CM));
+            telemetry.addData("upper", "%.01f cm", H.upperRange.getDistance(DistanceUnit.CM));
+            telemetry.addData("lower", "%.01f cm", H.lowerRange.getDistance(DistanceUnit.CM));
             telemetry.addData("heading", "%.1f", heading);
-            telemetry.addData("speed", "%.3f", Radius);
-            telemetry.addData( "vertpos", "%.2f", H.vertpos.getVoltage());
             telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
+            telemetry.addData("speed", "%.3f", Radius);
+            telemetry.addData("vertpos", "%.2f", H.vertpos.getVoltage());
+            telemetry.addData("grabber to bot", "%.2f", grabberToRobot);
             telemetry.addData("frontMotors", "left (%.2f), right (%.2f)", leftfrontPower, rightfrontPower);
             telemetry.addData("backMotors", "left (%.2f), right (%.2f)", leftbackPower, rightbackPower);
             telemetry.update();
