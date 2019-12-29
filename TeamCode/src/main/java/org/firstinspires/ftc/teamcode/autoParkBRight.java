@@ -31,9 +31,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -49,9 +50,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="auto park A", group="Linear Opmode")
+@Autonomous(name="auto park A right", group="Linear Opmode")
 //@Disabled
-public class autoParkA extends LinearOpMode {
+public class autoParkBRight extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -63,6 +64,7 @@ public class autoParkA extends LinearOpMode {
 
         MecanumWheelDriver drive = new MecanumWheelDriver();
         drive.init(hardwareMap);
+        ExecutorService pool = Executors.newFixedThreadPool(1);
         drive.RunWithEncoders(true);
 
         waitForStart();
@@ -74,8 +76,16 @@ public class autoParkA extends LinearOpMode {
         drive.moveInches(270, 5, .65);*/
         //drive.rotate(90, .65);
         //drive.rotate(-90, .65);
-        drive.moveInches(0, 1, .65, -1);
-        drive.moveInches(90, 20, .65, -1);
+        drive.setmoveInches(0, 1, .65, 0);
+        pool.execute(drive);
+        while (!isStopRequested() && !drive.moveDone) {
+            idle();
+        }
+        drive.setmoveInches(90, 10, .65, -1);
+        pool.execute(drive);
+        while (!isStopRequested() && !drive.moveDone) {
+            idle();
+        }
 
 
         // run until the end of the match (driver presses STOP)

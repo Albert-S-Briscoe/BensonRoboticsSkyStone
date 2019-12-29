@@ -33,6 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -47,9 +50,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="auto park B", group="Linear Opmode")
+@Autonomous(name="auto park B left", group="Linear Opmode")
 //@Disabled
-public class autoParkB extends LinearOpMode {
+public class autoParkAleft extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -61,13 +64,22 @@ public class autoParkB extends LinearOpMode {
 
         MecanumWheelDriver drive = new MecanumWheelDriver();
         drive.init(hardwareMap);
+        ExecutorService pool = Executors.newFixedThreadPool(1);
         drive.RunWithEncoders(true);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        drive.moveInches(0, 25, .65, -1);
-        drive.moveInches(80, 20, .65, -1);
+        drive.setmoveInches(0, 25, .65, 0);
+        pool.execute(drive);
+        while (!isStopRequested() && !drive.moveDone) {
+            idle();
+        }
+        drive.setmoveInches(-90, 10, .65, -1);
+        pool.execute(drive);
+        while (!isStopRequested() && !drive.moveDone) {
+            idle();
+        }
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {

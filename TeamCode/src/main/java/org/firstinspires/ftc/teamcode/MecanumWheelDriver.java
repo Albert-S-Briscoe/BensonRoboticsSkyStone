@@ -35,12 +35,16 @@ import com.qualcomm.robotcore.util.Range;
 
 /**     put the following code inside runOpMode()
 
-            MecanumWheelDriver drive = new MecanumWheelDriver();
-            drive.init(hardwareMap);
+            MecanumWheelDriver drive = new MecanumWheelDriver(hardwareMap);
 
         if you are going to run using encoders then include this as well
 
             drive.RunWithEncoders(true);
+
+        if you are going to run anything on another thread then add this
+        at the top of runOpMode()
+
+            ExecutorService pool = Executors.newFixedThreadPool(1);
 
         to call a function use this format
 
@@ -49,9 +53,26 @@ import com.qualcomm.robotcore.util.Range;
         info for individual functions are included at the top of the function
 
 
+        All degrees inputs are in this format
+
+            0
+         90   -90
+           180
  */
 
-public class MecanumWheelDriver {
+public class MecanumWheelDriver implements Runnable {
+
+    private int Angle_Degrees;
+    private double inches;
+    private double speed;
+    private double agl_frwd;
+
+    private int Degrees;
+    private double MaxSpeed;
+    private boolean toDegree;
+
+    private boolean ismove;
+    public boolean moveDone = false;
 
     private final double COUNTS_PER_REVOLUTION = 288;
     private final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
@@ -63,10 +84,39 @@ public class MecanumWheelDriver {
     private double speedmin = 0.15;
     private int rampDownAngl = 50;
     boolean selfcorrect = true;
+    HardwareMap HM;
 
     RobotHardware H = new RobotHardware();
 
-    public void move(double Angle_Degrees, double Speed, double Rotate) {
+    void init(HardwareMap HM) {
+
+        /**initializes RobotHardware
+         * requires hardwaremap as input
+         */
+        H.init(HM);
+    }
+
+    public void run() {
+        /**
+         * to run a function use either
+         *    drive.setrotate(int, double, boolean);
+         * or
+         *    drive.setmoveInches(int, double, double, double);
+         * then run this to start it
+         *    pool.execute(drive);
+         *
+         * this is only for moveInches() and Rotate() functions
+         */
+
+        if (ismove) {
+            moveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
+        } else {
+            rotate(/*Degrees, MaxSpeed, toDegree*/);
+        }
+        moveDone = true;
+    }
+
+    void move(double Angle_Degrees, double Speed, double Rotate) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
          * Speed, the speed at which to run the motors
@@ -84,9 +134,9 @@ public class MecanumWheelDriver {
         double rightbackPower;
 
         double rTotal = Speed + Math.abs(Rotate);
-        double Angle = Math.toRadians(Angle_Degrees - 45);
+        double Angle = Math.toRadians(Angle_Degrees + 45);
         double cosAngle = Math.cos(Angle);
-        double sinAngle = -Math.sin(Angle);
+        double sinAngle = Math.sin(Angle);
         double LF_RB;  //leftfront and rightback motors
         double RF_LB;  //rightfront and leftback motors
         double multiplier;
@@ -119,7 +169,7 @@ public class MecanumWheelDriver {
         H.rightback.  setPower(rightbackPower);
     }
 
-    public void moveWithGyro(double Angle_Degrees, double Speed, double agl_frwd) {
+    void moveWithGyro(double Angle_Degrees, double Speed, double agl_frwd) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
          * Speed, the speed at which to run the motors
@@ -136,9 +186,9 @@ public class MecanumWheelDriver {
         double leftbackPower;
         double rightbackPower;
 
-        double Angle = Math.toRadians(Angle_Degrees - 45);
+        double Angle = Math.toRadians(Angle_Degrees + 45);
         double cosAngle = Math.cos(Angle);
-        double sinAngle = -Math.sin(Angle);
+        double sinAngle = Math.sin(Angle);
         double LF_RB;  //leftfront and rightback motors
         double RF_LB;  //rightfront and leftback motors
         double multiplier;
@@ -160,10 +210,10 @@ public class MecanumWheelDriver {
 
         offset = FindDegOffset(H.getheading(), agl_frwd + 180);
 
-        leftfrontPower = LF_RB * Speed - offset / 45;
-        rightfrontPower = RF_LB * Speed + offset / 45;
-        leftbackPower = RF_LB * Speed - offset / 45;
-        rightbackPower = LF_RB * Speed + offset / 45;
+        leftfrontPower = LF_RB - offset / 45;
+        rightfrontPower = RF_LB + offset / 45;
+        leftbackPower = RF_LB - offset / 45;
+        rightbackPower = LF_RB + offset / 45;
 
         if (LF_RB > RF_LB) {
             if (offset > 0) {
@@ -179,13 +229,13 @@ public class MecanumWheelDriver {
             }
         }
 
-        H.leftfront.setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
-        H.rightfront.setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
-        H.leftback.setPower(Range.clip(leftbackPower * multiplier, -1, 1));
-        H.rightback.setPower(Range.clip(rightbackPower * multiplier, -1, 1));
+        H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * Speed, -1, 1));
+        H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * Speed, -1, 1));
+        H.leftback.setPower(Range.clip(leftbackPower * multiplier * Speed, -1, 1));
+        H.rightback.setPower(Range.clip(rightbackPower * multiplier * Speed, -1, 1));
     }
 
-    public void stop() {
+    void stop() {
 
         /**stops all the motors
          */
@@ -196,7 +246,19 @@ public class MecanumWheelDriver {
         H.rightback.  setPower(0);
     }
 
-    public void moveInches(int Angle_Degrees, int inches, double speed, double agl_frwd) {
+    void setmoveInches(int Angle_Degrees, double inches, double speed, double agl_frwd) {
+
+        this.Angle_Degrees = Angle_Degrees;
+        this.inches = inches;
+        this.speed = speed;
+        this.agl_frwd = agl_frwd;
+
+        ismove = true;
+        moveDone = false;
+
+    }
+
+    void moveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
          * inches, the number of inches to move is not accurate when going sideways due to the mecanum wheels
@@ -209,9 +271,9 @@ public class MecanumWheelDriver {
          * if you want to move backwards set Angle_degrees to 180
          */
 
-        double Angle = Math.toRadians(Angle_Degrees - 45);// - Math.PI / 4;
+        double Angle = Math.toRadians(Angle_Degrees + 45);// - Math.PI / 4;
         double cosAngle = Math.cos(Angle);
-        double sinAngle = -Math.sin(Angle);
+        double sinAngle = Math.sin(Angle);
         double LF_RB;  //leftfront and rightback motors
         double RF_LB;  //rightfront and leftback motors
         double multiplier;
@@ -223,7 +285,7 @@ public class MecanumWheelDriver {
         selfcorrect = true;
 
         if (agl_frwd == -1) {
-            agl_frwd = H.getheading();
+            agl_frwd = H.getheading() - 180;
             selfcorrect = true;
         } else if (agl_frwd == -2) {
             selfcorrect = false;
@@ -241,11 +303,6 @@ public class MecanumWheelDriver {
 
         int LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
         int RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
-
-        int leftfrontTarget = H.leftfront.getCurrentPosition() + LF_RBtarget;
-        int rightfrontTarget = H.rightfront.getCurrentPosition() + RF_LBtarget;
-        int leftbackTarget = H.leftback.getCurrentPosition() + RF_LBtarget;
-        int rightbackTarget = H.rightback.getCurrentPosition() + LF_RBtarget;
 
         H.leftfront.  setTargetPosition(H.leftfront.  getCurrentPosition() + LF_RBtarget);
         H.rightfront. setTargetPosition(H.rightfront. getCurrentPosition() + RF_LBtarget);
@@ -339,28 +396,55 @@ public class MecanumWheelDriver {
 
     }
 
-    public void rotate(int Degrees, double MaxSpeed) {
+    void setrotate(int Degrees, double MaxSpeed, boolean toDegree) {
+        this.Degrees = Degrees;
+        this.MaxSpeed = MaxSpeed;
+        this.toDegree = toDegree;
 
-        /**Rotates a number of degrees relative to the robot's current angle
+        ismove = false;
+        moveDone = false;
+    }
+
+    void rotate(/*int Degrees, double MaxSpeed, boolean toDegree*/) {
+
+        /**if toDegree is false:
+         * Rotates a number of degrees relative to the robot's current angle
          * the robot will rotate in one direction until it arrives at the target degree
-         * the direction is determind by whether or not the input degree is negative
+         * the direction is determined by whether or not the input degree is negative
          * -degree = right, +degree = left
+         *
+         * if toDegree is true:
+         * Rotates to a degree relative to the starting angle of the robot
+         * for example: rotateToDeg(-90, 1); would make the robot turn at full speed to -90 degrees (right)
+         * where 0 degrees is the front of the robot when the RobotHardware is initialized
+         * rotateToDeg will always find the shortest direction to turn even while running
+         * it will never turn more than 180 degrees
+         * while running the robot can be intercepted and will still stop at the target degrees
+         *
+         * Both:
          * a number of degrees before the target the robot will gradually slow down to the min speed
-         * both can be set at the top of the class as rampDownAngl and speedmin
+         * both can be set at the top of the class as rampDownAngl and speedmin or with the setRampDown() function
          * DO NOT input a negative MaxSpeed if you do the robot won't move and will be stuck in an infinite loop
          */
 
         double speed;
         double offset;
         double heading = H.getheading();
+        double Target;
+        int drect;
         //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        double Target = FindTargetDeg(heading, Degrees);
-        int drect = Range.clip(Degrees, -1, 1);
+
+        if (toDegree) {
+            Target = Degrees + 180;
+        } else {
+            Target = addDegree(heading, Degrees);
+        }
 
         do {
             heading = H.getheading();
             offset = FindDegOffset(heading, Target);
             speed = Range.clip( Math.abs(offset / rampDownAngl), speedmin, MaxSpeed);
+            drect = (int)Range.clip(offset * 100, -1, 1);
             //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
             H.leftfront.  setPower(-speed * drect);
@@ -409,46 +493,7 @@ public class MecanumWheelDriver {
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
     }
 
-    public void rotateToDeg(int Target, double MaxSpeed) {
-
-        /**Rotates to a degree relative to the starting angle of the robot
-         * for example: rotateToDeg(-90, 1); would make the robot turn at full speed to -90 degrees (right)
-         * where 0 degrees is the front of the robot when the RobotHardware is initialized
-         * rotateToDeg will always find the shortest direction to turn even while running
-         * it will never turn more than 180 degrees
-         * while running the robot can be intercepted and will still stop at the target degrees
-         * a number of degrees before the target the robot will gradually slow down to the min speed
-         * both can be set at the top of the class as rampDownAngl and speedmin or with the setRampDown() function
-         * DO NOT input a negative MaxSpeed if you do the robot won't move and will be stuck in an infinite loop
-         */
-
-        double speed;
-        double offset;
-        int drect;
-        double heading;
-        //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-        do {
-            heading = H.getheading();
-            offset = FindDegOffset(heading, Target + 180);
-            speed = Range.clip( Math.abs(offset / rampDownAngl), speedmin, MaxSpeed);
-            drect = (int)Range.clip(offset * 100, -1, 1);
-            //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-            H.leftfront.  setPower(-speed * drect);
-            H.rightfront. setPower(speed * drect);
-            H.leftback.   setPower(-speed * drect);
-            H.rightback.  setPower(speed * drect);
-
-        } while (Math.abs(offset) > turnAccrate);
-
-        H.leftfront.  setPower(0);
-        H.rightfront. setPower(0);
-        H.leftback.   setPower(0);
-        H.rightback.  setPower(0);
-    }
-
-    public void setRampDown(int ramp_Down_Angle, double minimum_Speed) {
+    void setRampDown(int ramp_Down_Angle, double minimum_Speed) {
         /**sets what angle to start slowing down in rotateToDeg() and rotate()
          * and what the minimum speed should be, the robot may not go this speed if the ramp_Down_Angle is to low
          * default: ramp_Down_Angle = 50, minimum_Speed = 0.15 set either to 0 to reset to default
@@ -466,16 +511,7 @@ public class MecanumWheelDriver {
         }
     }
 
-    public void init(HardwareMap HM) {
-
-        /**initializes RobotHardware
-         * requires hardwaremap as input
-         */
-
-        H.init(HM);
-    }
-
-    public void RunWithEncoders(boolean On) {
+    void RunWithEncoders(boolean On) {
 
         /**turns on or off encoders
          * will reset encoders when turned on
@@ -500,21 +536,20 @@ public class MecanumWheelDriver {
         }
     }
 
-    private double FindTargetDeg(double DegCurrent, double addDeg) {
+    private double addDegree(double DegCurrent, double addDeg) {
 
         /**adds a number of degrees to the current degree with rapping around from 360 to 0
-         * will not work with when adding more than 360 degrees or less than -360
          * returns a value between 0 and 360
          */
 
         double output = DegCurrent + addDeg;
-        //for (; output < 0 || output > 360;) {
-        if (output >= 360) {
-            output -= 360;
-        } else if (output < 0) {
-            output += 360;
+        while (output < 0 || output > 360) {
+            if (output >= 360) {
+                output -= 360;
+            } else if (output < 0) {
+                output += 360;
+            }
         }
-        //}
         return output;
     }
 
@@ -524,7 +559,7 @@ public class MecanumWheelDriver {
          * TargetDeg, the degree with which to find the offset
          * Finds the angle between current degree and the target degree
          * returns a value between -180 and 180
-         * output will be negative if the current degree is left of the target, and positive on the right
+         * output will be negative if the current degree is left of the target, positive if on the right
          *    0
          * 90   -90
          *   180

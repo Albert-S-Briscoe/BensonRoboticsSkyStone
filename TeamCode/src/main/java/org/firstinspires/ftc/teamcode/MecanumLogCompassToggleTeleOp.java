@@ -91,11 +91,23 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
 
             y = -gamepad1.left_stick_y;
             x = gamepad1.left_stick_x;
-            Rotate = gamepad1.right_stick_x;
+            if (Math.abs(gamepad1.right_stick_x) > 0.05) {
+                if (gamepad1.right_stick_x > 0) {
+                    Rotate = -((Math.log10((-Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1;
+                } else {
+                    Rotate = -(-((Math.log10((Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1);
+                }
+            } else {
+                Rotate = 0;
+            }
             //Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
-            Radius = -((Math.log10((-Range.clip(Math.hypot(x, y), -1, 1) + 1 + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1)) + 1;
+            if (Math.hypot(x, y) > 0.05) {
+                Radius = -((Math.log10((-Range.clip(Math.hypot(x, y), -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1;
+            } else {
+                Radius = 0;
+            }
             stickTotal = Radius + Math.abs(Rotate);
-            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - heading);
+            Angle = Math.atan2(y, x) + Math.toRadians(agl_frwd - heading - 45);
             cosAngle = Math.cos(Angle);
             sinAngle = Math.sin(Angle);
 
@@ -116,7 +128,7 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             leftbackPower = RF_LB * Radius + Rotate;
             rightbackPower = LF_RB * Radius - Rotate;
 
-            if (Math.abs(stickTotal) > 1) {
+            if (stickTotal > 1) {
                 leftfrontPower = leftfrontPower / stickTotal;
                 rightfrontPower = rightfrontPower / stickTotal;
                 leftbackPower = leftbackPower / stickTotal;
@@ -201,9 +213,9 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             telemetry.addData("front", "%.01f cm", H.upperRange.getDistance(DistanceUnit.CM));
             telemetry.addData("back", "%.01f cm", H.lowerRange.getDistance(DistanceUnit.CM));
             telemetry.addData("heading", "%.1f", heading);
+            telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
             telemetry.addData("speed", "%.3f", Radius);
             telemetry.addData( "vertpos", "%.2f", H.vertpos.getVoltage());
-            telemetry.addData("speed before log", "%.3f", Math.hypot(x, y));
             telemetry.addData("frontMotors", "left (%.2f), right (%.2f)", leftfrontPower, rightfrontPower);
             telemetry.addData("backMotors", "left (%.2f), right (%.2f)", leftbackPower, rightbackPower);
             telemetry.update();

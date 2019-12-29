@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -41,9 +42,9 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import java.util.List;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-
+@Disabled
 @Autonomous(name="red_1A2A3A4B", group="Linear Opmode")
-public class Redauto1A2A3A4B extends LinearOpMode {
+public class Redauto1A2A3A4A extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXfJetz/////AAABmfTftTQRKUq2u+iCzbuFm2wKhp5/qubTF+6xF9VBwMBiVi2lCwJbNrIAVofnUKke4/MjFtZROHGeelAgbQx6MjYX+qdX4vRB5z2PboepftoqvoZy3irQKQ2aKqNSbpN72hI/tI2wluN0xqC6KThtMURH0EuvUf8VcGDfmuXiA/uP00/2dsYhIMhxBJCmBq0AG5jMWi8MnHJDZwnoYLdcliKB7rvNTUDbf1fzxRzf9QHgB2u+invzPou7q8ncAsD5GdXFfA/CiYmR65JKXDOE0wHoc8FxvrzUIRCQ2geSypo7eY5q/STJvqPmjoj33CQFHl0hKMx05QwwsABdlIZvfLLbjA3VH2HO4dcv+OOoElws";
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
@@ -203,7 +204,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     H.vertical.setPosition(.5);
                     //lower servo a little
                     drive.RunWithEncoders(true);
-                    drive.moveInches(0, 2, speed_norm, 0);
+                    drive.setmoveInches(0, 2, speed_norm, 0);
                     while (!isStopRequested() && H.vertpos.getVoltage() > .13) {
                         H.vertical.setPosition(1);
                     }
@@ -233,11 +234,11 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     H.vertical.setPosition(0);
                     sleep(41000 / degPerSec);
                     H.vertical.setPosition(.5);*/
-                    drive.moveInches(180, 1, speed_norm, 0);
+                    drive.setmoveInches(180, 1, speed_norm, 0);
                     mode = 4;
                     break;
                 case 4: // navigate to foundation (2A)
-                    drive.rotateToDeg(90 * field_side, speed_norm);
+                    drive.setrotate(90 * field_side, speed_norm, true);
                     /*inches_to_move = 96 - (int)H.lowerRange.getDistance(DistanceUnit.INCH);
                     if (inches_to_move < 0 || inches_to_move > 90) {
                         mode = 0;
@@ -294,8 +295,8 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     drive.stop();
                     mode = 5;*/
                 case 5: // place skystone
-                    drive.rotateToDeg(0, speed_fast);
-                    drive.moveInches(0, 8, speed_norm, 0);
+                    drive.setrotate(0, speed_fast, true);
+                    drive.setmoveInches(0, 8, speed_norm, 0);
                     /*H.vertical.setPosition(1);
                     sleep(25000 / degPerSec);
                     H.vertical.setPosition(.5);*/
@@ -320,7 +321,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     sleep(750);
                     drive.stop();
                     drive.setRampDown(1, 0.15);
-                    drive.rotate(75 * field_side, speed_fast);
+                    drive.setrotate(75 * field_side, speed_fast, false);
                     drive.setRampDown(0, 0);
                     drive.move(0, speed_fast, 0);
                     sleep(1300);
@@ -333,7 +334,7 @@ public class Redauto1A2A3A4B extends LinearOpMode {
                     //drive.moveInches(-90 * field_side, 7, speed_norm, -2);
                     drive.move(-90 * field_side, speed_norm, 0);
                     sleep(600);
-                    drive.moveInches(180, 40, speed_norm, 270);
+                    drive.setmoveInches(180, 40, speed_norm, 270);
                     mode = 9;
                     break;
             }

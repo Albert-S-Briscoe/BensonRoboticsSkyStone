@@ -81,11 +81,14 @@ public class RobotHardware {
     }
 
     public double getheading() {
+        // returns a value between 0 and 360
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         return AngleUnit.DEGREES.fromUnit(angles.angleUnit, angles.firstAngle) + 180;
+
     }
 
     public void grab(boolean down) {
+
         if (down) {
             L.setPosition(1);
             R.setPosition(0);
@@ -93,5 +96,6 @@ public class RobotHardware {
             L.setPosition(0);
             R.setPosition(1);
         }
+
     }
 }

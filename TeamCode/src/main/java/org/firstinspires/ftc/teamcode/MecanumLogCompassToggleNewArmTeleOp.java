@@ -60,10 +60,10 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
         double RF_LB;  //rightfront and leftback motors
 
         final double logCurve = 35;
-        final double zeroAngle = 0.12;
-        final double degreesPerVolt = 101;
-        final double armLength = 15;
-        final double armOffset = 2;
+        final double zeroVolts = 0.38;
+        final double degreesPerVolt = 111;
+        final double armLength = 11.75;
+        final double armOffset = 6.5;
 
         double y;
         double x;
@@ -78,7 +78,7 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
         double armAngle;
         double armPos;
         double grabberToRobot;
-        double armMove = 0;
+        double armMove = 6.5;
         double armOffAngle;
 
         boolean slowDown = false;
@@ -86,7 +86,11 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
         boolean useCompass = true;
         boolean compassButton = false;
         boolean vertPosButton = false;
-        double  position = 1;
+        boolean armUpButton = false;
+        boolean armDownButton = false;
+        boolean useTrigArm = false;
+        boolean armButton = false;
+        double  position = 0;
         double V_pos;
 
         double agl_frwd = 180;
@@ -101,16 +105,29 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
 
             y = -gamepad1.left_stick_y;
             x = gamepad1.left_stick_x;
-            Rotate = gamepad1.right_stick_x;
+            if (Math.abs(gamepad1.right_stick_x) > 0.05) {
+                if (gamepad1.right_stick_x > 0) {
+                    Rotate = -((Math.log10((-Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1;
+                } else {
+                    Rotate = -(-((Math.log10((Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1);
+                }
+            } else {
+                Rotate = 0;
+            }
             //Radius = (Math.log10((Math.hypot(x, y) + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1);
-            Radius = -((Math.log10((-Range.clip(Math.hypot(x, y), -1, 1) + 1 + 1 / logCurve) * logCurve)) / Math.log10(logCurve + 1)) + 1;
+            if (Math.hypot(x, y) > 0.05) {
+                Radius = -((Math.log10((-Range.clip(Math.hypot(x, y), -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.85 + 1;
+            } else {
+                Radius = 0;
+            }
             stickTotal = Radius + Math.abs(Rotate);
-            Angle = Math.atan2(y, x) - Math.PI / 4 + Math.toRadians(agl_frwd - heading);
+            Angle = Math.atan2(y, x) + Math.toRadians(agl_frwd - heading - 45);
             cosAngle = Math.cos(Angle);
             sinAngle = Math.sin(Angle);
-            armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroAngle;
+
+            armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
             armPos = Math.sin(Math.toRadians(armAngle)) * armLength;
-            grabberToRobot = Math.cos(armAngle) * armLength - armOffset;
+            grabberToRobot = Math.cos(Math.toRadians(armAngle)) * armLength - armOffset;
 
             ////////////////////////////// Mecanum Wheel Stuff //////////////////////////////
 
@@ -137,52 +154,62 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
             }
 
             ////////////////////////////// Move Arm //////////////////////////////
+            if (useTrigArm) {
+                if (Math.abs(armMove - armPos) > 0.075) {
 
-            while (Math.abs(armMove - armPos) > 0.25) {
+                /*armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroVolts;
+                armPos = Math.sin(armAngle) / armLength;*/
+                    armOffAngle = Math.abs(armAngle - Math.toDegrees(Math.asin(armMove / armLength)));
 
-                armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroAngle;
-                armPos = Math.sin(armAngle) / armLength;
-                armOffAngle = Math.abs(armAngle - Math.asin(armMove / armLength));
-
-                if (armPos > armMove) {
-                    H.vertical.setPosition(1 - 1 / (armOffAngle * 4));
+                    if (armPos > armMove) {
+                        H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
+                    } else {
+                        H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
+                    }
                 } else {
-                    H.vertical.setPosition(0 + 1 / (armOffAngle * 4));
+                    H.vertical.setPosition(0.5);
                 }
+            } else {
+                if (H.vertpos.getVoltage() > 1.6) {
+                    V_pos = (gamepad1.left_trigger + 1) / 2;
+                } else if (H.vertpos.getVoltage() < 0.35 ) {
+                    V_pos = (1 - gamepad1.right_trigger) / 2;
+                } else {
+                    V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
+                }
+                H.vertical.setPosition(V_pos);
             }
-            H.vertical.setPosition(0.5);
 
             ////////////////////////////// Buttons //////////////////////////////
 
-            if (gamepad1.y && armMove != 10.5) {
+            if (gamepad1.y && armMove != 10.5 && !armUpButton) {
                 if (armMove == 0) {
                     armMove = 2.5;
                 } else {
                     armMove += 4;
                 }
-            } else if (gamepad1.a && armMove != 0) {
+                armUpButton = true;
+            } else if (gamepad1.a && armMove != 0 && !armDownButton) {
                 if (armMove == 2.5) {
                     armMove = 0;
                 } else {
                     armMove -= 4;
                 }
+                armDownButton = true;
             }
-
-            if (!H.limit.getState()) {
-                V_pos = (gamepad1.left_trigger + 1) / 2;
-            } else if (H.vertpos.getVoltage() < .15 ) {
-                V_pos = (1 - gamepad1.right_trigger) / 2;
-            } else {
-                V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
+            if (!gamepad1.y) {
+                armUpButton = false;
             }
-            H.vertical.setPosition(V_pos);
+            if (!gamepad1.a) {
+                armDownButton = false;
+            }
 
             if (gamepad1.right_bumper) {
                 if (!vertPosButton) {
-                    if (position == 1) {
-                        position = 0;
-                    } else {
+                    if (position == 0) {
                         position = 1;
+                    } else {
+                        position = 0;
                     }
                     vertPosButton = true;
                 }
@@ -197,7 +224,7 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
                 H.grab(true);
             }
 
-            if (gamepad1.dpad_right) {
+            if (gamepad1.back) {
                 if (!compassButton) {
                     useCompass = !useCompass;
                     compassButton = true;
@@ -214,6 +241,15 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
 
             if (gamepad1.start && stickTotal < 0.1) {
                 agl_frwd = heading;
+            }
+
+            if (gamepad1.x) {
+                if (!armButton) {
+                    useTrigArm = !useTrigArm;
+                    armButton = true;
+                }
+            } else {
+                armButton = false;
             }
 
             if (gamepad1.left_bumper | gamepad1.left_stick_button) {

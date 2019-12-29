@@ -29,16 +29,27 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @TeleOp(name="mecanum driver test", group="Linear Opmode")
 public class MecanumDriverTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+    boolean is_dpad_down_button = false;
+    boolean is_dpad_up_button = false;
+    boolean is_dpad_right_button = false;
+    boolean is_dpad_left_button = false;
+    boolean isybutton = false;
+    boolean isbbutton = false;
+    boolean isabutton = false;
+    boolean isxbutton = false;
+
 
     @Override
     public void runOpMode() {
@@ -48,6 +59,9 @@ public class MecanumDriverTest extends LinearOpMode {
         MecanumWheelDriver drive = new MecanumWheelDriver();
         drive.init(hardwareMap);
         drive.RunWithEncoders(true);
+        //MecanumParallelDrive a = new MecanumParallelDrive(hardwareMap);
+
+        ExecutorService pool = Executors.newFixedThreadPool(1);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -55,22 +69,63 @@ public class MecanumDriverTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            if (gamepad1.dpad_up) {
-                drive.rotateToDeg(0, .65);
-            } else if (gamepad1.dpad_right) {
-                drive.rotateToDeg(-90, .65);
-            } else if (gamepad1.dpad_down) {
-                drive.rotateToDeg(180, .65);
-            } else if (gamepad1.dpad_left) {
-                drive.rotateToDeg(90, .65);
-            } else if (gamepad1.y) {
-                drive.moveInches(0, 25, .65, 0);
-            } else if (gamepad1.x) {
-                drive.moveInches(-90, 25, .65, -90);
-            } else if (gamepad1.a) {
-                drive.moveInches(180, 25, .65, 0);
-            } else if (gamepad1.b) {
-                drive.moveInches(90, 25, .65, 0);
+            if (gamepad1.dpad_up && !is_dpad_up_button) {
+                drive.setrotate(0, .65, true);
+                pool.execute(drive);
+                is_dpad_up_button = true;
+            } else if (gamepad1.dpad_right && !is_dpad_right_button) {
+                drive.setrotate(-90, .65, true);
+                pool.execute(drive);
+                is_dpad_right_button = true;
+            } else if (gamepad1.dpad_down && !is_dpad_down_button) {
+                drive.setrotate(180, .65, true);
+                pool.execute(drive);
+                is_dpad_down_button = true;
+            } else if (gamepad1.dpad_left && !is_dpad_left_button) {
+                drive.setrotate(90, .65, true);
+                pool.execute(drive);
+                is_dpad_left_button = true;
+            } else if (gamepad1.y && !isybutton) {
+                //drive.moveInches(0, 25, .65, 0);
+                drive.setmoveInches(0, 25, .65, 0);
+                pool.execute(drive);
+                isybutton = true;
+            } else if (gamepad1.x && !isxbutton) {
+                drive.setmoveInches(-90, 25, .65, -90);
+                pool.execute(drive);
+                isxbutton = true;
+            } else if (gamepad1.a && !isabutton) {
+                drive.setmoveInches(180, 25, .65, 0);
+                pool.execute(drive);
+                isabutton = true;
+            } else if (gamepad1.b && !isbbutton) {
+                drive.setmoveInches(90, 25, .65, 0);
+                pool.execute(drive);
+                isbbutton = true;
+            }
+            if (!gamepad1.y) {
+                isybutton = false;
+            }
+            if (!gamepad1.b) {
+                isbbutton = false;
+            }
+            if (!gamepad1.a) {
+                isabutton = false;
+            }
+            if (!gamepad1.x) {
+                isxbutton = false;
+            }
+            if (!gamepad1.dpad_down) {
+                is_dpad_down_button = false;
+            }
+            if (!gamepad1.dpad_up) {
+                is_dpad_up_button = false;
+            }
+            if (!gamepad1.dpad_left) {
+                is_dpad_left_button = false;
+            }
+            if (!gamepad1.dpad_right) {
+                is_dpad_right_button = false;
             }
 
             if (gamepad1.left_bumper) {
@@ -84,15 +139,17 @@ public class MecanumDriverTest extends LinearOpMode {
             } else if (gamepad1.back) {
                 drive.setRampDown(0, 0);
             }
-
-            while (gamepad1.left_stick_button) {
-                drive.moveWithGyro(0, .5, 0);
+            if (gamepad1.left_stick_button) {
+                while (gamepad1.left_stick_button) {
+                    drive.moveWithGyro(0, .5, 0);
+                }
+                drive.stop();
             }
-            drive.stop();
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("heading", "%.3f", drive.H.getheading());
             telemetry.update();
         }
+        pool.shutdownNow();
     }
 }
