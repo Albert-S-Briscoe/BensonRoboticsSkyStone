@@ -204,7 +204,7 @@ public class auto1A2A3A4A extends LinearOpMode {
                     H.vertical.setPosition(.5);
                     //lower servo a little
                     drive.RunWithEncoders(true);
-                    drive.setmoveInches(0, 2, speed_norm, 0);
+                    drive.setMoveInches(0, 2, speed_norm, 0);
                     while (!isStopRequested() && H.vertpos.getVoltage() > .13) {
                         H.vertical.setPosition(1);
                     }
@@ -225,7 +225,7 @@ public class auto1A2A3A4A extends LinearOpMode {
                     /*H.vertical.setPosition(1);
                     sleep(27000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
-                    drive.moveInches(0, 2, speed_norm, 0);
+                    drive.MoveInches(0, 2, speed_norm, 0);
                     H.vertical.setPosition(1);
                     sleep(10000 / degPerSec);//                                      <----------
                     H.vertical.setPosition(.5);
@@ -234,7 +234,7 @@ public class auto1A2A3A4A extends LinearOpMode {
                     H.vertical.setPosition(0);
                     sleep(41000 / degPerSec);
                     H.vertical.setPosition(.5);*/
-                    drive.setmoveInches(180, 1, speed_norm, 0);
+                    drive.setMoveInches(180, 1, speed_norm, 0);
                     mode = 4;
                     break;
                 case 4: // navigate to foundation (2A)
@@ -251,7 +251,7 @@ public class auto1A2A3A4A extends LinearOpMode {
                         drive.moveWithGyro(0, speed_fast, 90 * field_side);
                     }
                     drive.stop();
-                    //drive.moveInches(0, inches_to_move, speed_fast, 90);
+                    //drive.MoveInches(0, inches_to_move, speed_fast, 90);
                     mode = 5;
                     break;
                 /*case 4: // navigate to foundation (2A)
@@ -296,14 +296,14 @@ public class auto1A2A3A4A extends LinearOpMode {
                     mode = 5;*/
                 case 5: // place skystone
                     drive.setrotate(0, speed_fast, true);
-                    drive.setmoveInches(0, 8, speed_norm, 0);
+                    drive.setMoveInches(0, 8, speed_norm, 0);
                     /*H.vertical.setPosition(1);
                     sleep(25000 / degPerSec);
                     H.vertical.setPosition(.5);*/
                     H.grab(true);
                     H.grabber.setPosition(1);
                     sleep(750);
-                    //drive.moveInches(180, 4, speed_slow, -1);
+                    //drive.MoveInches(180, 4, speed_slow, -1);
                     /*H.vertical.setPosition(0);
                     sleep(25000  / degPerSec);
                     H.vertical.setPosition(.5);*/
@@ -312,7 +312,7 @@ public class auto1A2A3A4A extends LinearOpMode {
                 /*case 6: // position and grab foundation
                     drive.rotateToDeg(180, speed_fast);
                     inches_to_move = 1 + (int)H.lowerRange.getDistance(DistanceUnit.INCH);
-                    drive.moveInches(180, inches_to_move, speed_norm, 180);
+                    drive.MoveInches(180, inches_to_move, speed_norm, 180);
                     H.grab(true);
                     sleep(500);
                     mode = 7;*/
@@ -326,15 +326,15 @@ public class auto1A2A3A4A extends LinearOpMode {
                     drive.move(0, speed_fast, 0);
                     sleep(1300);
                     drive.stop();
-                    //drive.moveInches(0, 12, speed_norm, -2);
+                    //drive.MoveInches(0, 12, speed_norm, -2);
                     H.grab(false);
                     mode = 8;
                     break;
                 case 8: // park (4B)
-                    //drive.moveInches(-90 * field_side, 7, speed_norm, -2);
+                    //drive.MoveInches(-90 * field_side, 7, speed_norm, -2);
                     drive.move(-90 * field_side, speed_norm, 0);
                     sleep(600);
-                    drive.setmoveInches(180, 40, speed_norm, 90 * field_side);
+                    drive.setMoveInches(180, 40, speed_norm, 90 * field_side);
                     mode = 9;
                     break;
             }

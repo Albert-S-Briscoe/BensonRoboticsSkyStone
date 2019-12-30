@@ -71,7 +71,7 @@ public class MecanumWheelDriver implements Runnable {
     private double MaxSpeed;
     private boolean toDegree;
 
-    private boolean ismove;
+    private byte moveMode; // 1 = moveInches(), 2 = rotate(), 3 = MoveArmToDeg()
     public boolean moveDone = false;
 
     private final double COUNTS_PER_REVOLUTION = 288;
@@ -84,6 +84,14 @@ public class MecanumWheelDriver implements Runnable {
     private double speedmin = 0.15;
     private int rampDownAngl = 50;
     boolean selfcorrect = true;
+
+    private final double zeroVolts = 0.38;
+    private final double degreesPerVolt = 111;
+    private double maxArmPower = 0.3;
+    private double armTargetAngle;
+    private double armAngle;
+    private double armOffAngle;
+
     HardwareMap HM;
 
     RobotHardware H = new RobotHardware();
@@ -101,18 +109,25 @@ public class MecanumWheelDriver implements Runnable {
          * to run a function use either
          *    drive.setrotate(int, double, boolean);
          * or
-         *    drive.setmoveInches(int, double, double, double);
+         *    drive.setMoveInches(int, double, double, double);
          * then run this to start it
          *    pool.execute(drive);
          *
-         * this is only for moveInches() and Rotate() functions
+         * this is only for MoveInches(), Rotate() and MoveArmToDeg() functions
          */
 
-        if (ismove) {
-            moveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
-        } else {
-            rotate(/*Degrees, MaxSpeed, toDegree*/);
+        switch (moveMode) {
+            case 1:
+                MoveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
+                break;
+            case 2:
+                rotate(/*Degrees, MaxSpeed, toDegree*/);
+                break;
+            case 3:
+                MoveArmToDeg();
+                break;
         }
+
         moveDone = true;
     }
 
@@ -246,26 +261,26 @@ public class MecanumWheelDriver implements Runnable {
         H.rightback.  setPower(0);
     }
 
-    void setmoveInches(int Angle_Degrees, double inches, double speed, double agl_frwd) {
+    void setMoveInches(int Angle_Degrees, double inches, double speed, double agl_frwd) {
 
         this.Angle_Degrees = Angle_Degrees;
         this.inches = inches;
         this.speed = speed;
         this.agl_frwd = agl_frwd;
 
-        ismove = true;
+        moveMode = 1;
         moveDone = false;
 
     }
 
-    void moveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
+    void MoveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
-         * inches, the number of inches to move is not accurate when going sideways due to the mecanum wheels
+         * inches, the number of inches to move. Is not accurate when going sideways due to the mecanum wheels
          * speed, the speed at which to run the motors
          * agl_frwd, the direction the robot should face while moving
-         * it will be set automatically if less than 0
-         * forward = 0 degrees, right = 90, left = -90 back = 180
+         * it will be set automatically if = -1
+         * forward = 0 degrees, right = 90, left = -90, back = 180
          *
          * DO NOT set speed to a negative number
          * if you want to move backwards set Angle_degrees to 180
@@ -401,7 +416,7 @@ public class MecanumWheelDriver implements Runnable {
         this.MaxSpeed = MaxSpeed;
         this.toDegree = toDegree;
 
-        ismove = false;
+        moveMode = 2;
         moveDone = false;
     }
 
@@ -491,6 +506,39 @@ public class MecanumWheelDriver implements Runnable {
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
+    }
+
+    void setMoveArmToDeg(double armMove, double maxArmPower) {
+
+        this.armTargetAngle = Range.clip(armMove, 0, 135);
+        this.maxArmPower = maxArmPower;
+
+        moveMode = 3;
+        moveDone = false;
+
+    }
+
+    void MoveArmToDeg() {
+
+         do {
+
+             armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
+             armOffAngle = Math.abs(armAngle - armTargetAngle);
+
+             if (armAngle > armTargetAngle) {
+
+                 H.vertical.setPower(maxArmPower - Range.clip(1 / armOffAngle, 0, maxArmPower / 2 ));
+
+             } else {
+
+                 H.vertical.setPower(-maxArmPower + Range.clip(1 / armOffAngle, 0, maxArmPower / 2 ));
+
+             }
+
+        } while (armOffAngle > 5);
+
+        H.vertical.setPower(0);
+
     }
 
     void setRampDown(int ramp_Down_Angle, double minimum_Speed) {

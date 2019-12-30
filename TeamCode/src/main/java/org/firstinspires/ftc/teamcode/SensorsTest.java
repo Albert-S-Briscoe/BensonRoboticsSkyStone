@@ -121,7 +121,7 @@ public class SensorsTest extends LinearOpMode {
     //Touch1 = hardwareMap.get(DigitalChannel.class, "T1");
     //Touch2 = hardwareMap.get(DigitalChannel.class, "T2");
 
-    // setmoveInches the digital channel to input.
+    // setMoveInches the digital channel to input.
     //Touch1.setMode(DigitalChannel.Mode.INPUT);
     //Touch2.setMode(DigitalChannel.Mode.INPUT);
 

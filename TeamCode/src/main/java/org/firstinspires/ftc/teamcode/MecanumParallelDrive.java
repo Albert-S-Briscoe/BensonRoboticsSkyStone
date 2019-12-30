@@ -25,7 +25,7 @@ public class MecanumParallelDrive implements Runnable {
     public void run() {
 
         if (ismove) {
-            //drive.moveInches(Angle_Degrees, inches, speed, agl_frwd);
+            //drive.MoveInches(Angle_Degrees, inches, speed, agl_frwd);
         } else {
             //drive.rotate(Degrees, MaxSpeed, todeg);
         }

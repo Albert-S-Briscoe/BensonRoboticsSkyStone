@@ -70,12 +70,12 @@ public class autoParkAleft extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
-        drive.setmoveInches(0, 25, .65, 0);
+        drive.setMoveInches(0, 25, .65, 0);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();
         }
-        drive.setmoveInches(-90, 10, .65, -1);
+        drive.setMoveInches(-90, 10, .65, -1);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();

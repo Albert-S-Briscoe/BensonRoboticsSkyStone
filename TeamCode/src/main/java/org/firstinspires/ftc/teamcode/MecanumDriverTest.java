@@ -86,20 +86,20 @@ public class MecanumDriverTest extends LinearOpMode {
                 pool.execute(drive);
                 is_dpad_left_button = true;
             } else if (gamepad1.y && !isybutton) {
-                //drive.moveInches(0, 25, .65, 0);
-                drive.setmoveInches(0, 25, .65, 0);
+                //drive.MoveInches(0, 25, .65, 0);
+                drive.setMoveInches(0, 25, .65, 0);
                 pool.execute(drive);
                 isybutton = true;
             } else if (gamepad1.x && !isxbutton) {
-                drive.setmoveInches(-90, 25, .65, -90);
+                drive.setMoveInches(-90, 25, .65, -90);
                 pool.execute(drive);
                 isxbutton = true;
             } else if (gamepad1.a && !isabutton) {
-                drive.setmoveInches(180, 25, .65, 0);
+                drive.setMoveInches(180, 25, .65, 0);
                 pool.execute(drive);
                 isabutton = true;
             } else if (gamepad1.b && !isbbutton) {
-                drive.setmoveInches(90, 25, .65, 0);
+                drive.setMoveInches(90, 25, .65, 0);
                 pool.execute(drive);
                 isbbutton = true;
             }

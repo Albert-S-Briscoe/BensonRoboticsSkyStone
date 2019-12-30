@@ -35,7 +35,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
@@ -135,7 +134,7 @@ public class autonomous extends LinearOpMode {
         }
 
         drive.setrotate(0,0, false);
-        drive.setmoveInches(0, 0, 0, 0);
+        drive.setMoveInches(0, 0, 0, 0);
         pool.shutdownNow();
         H.vertical.setPosition(.5);
         H.leftfront.setPower(0);
@@ -187,7 +186,7 @@ public class autonomous extends LinearOpMode {
         }
         H.vertical.setPosition(.5);
 
-        drive.setmoveInches(0, 72, speed_fast, 90 * field_side);
+        drive.setMoveInches(0, 72, speed_fast, 90 * field_side);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();
@@ -222,7 +221,7 @@ public class autonomous extends LinearOpMode {
         drive.move(90 * field_side, speed_fast, 0);
         sleep(750);
         drive.stop();
-        //drive.moveInches(0, 12, speed_norm, -2);
+        //drive.MoveInches(0, 12, speed_norm, -2);
         H.grab(false);
     }
 
@@ -237,7 +236,7 @@ public class autonomous extends LinearOpMode {
         }
         //drive.move(90 * field_side, speed_norm, 0);
         //sleep(600);
-        drive.setmoveInches(180, 40, speed_fast, -1);
+        drive.setMoveInches(180, 40, speed_fast, -1);
         pool.execute(drive);
         telemetry.addData("stat", "moveing");
         telemetry.update();
@@ -310,7 +309,7 @@ public class autonomous extends LinearOpMode {
             }
         }
         if (!isStopRequested()) {
-            drive.setmoveInches(90 * blockPos, 8 * sidewaysInches, speed_fast, 0);
+            drive.setMoveInches(90 * blockPos, 8 * sidewaysInches, speed_fast, 0);
         }
     }
 
@@ -369,14 +368,14 @@ public class autonomous extends LinearOpMode {
                 H.vertical.setPosition(.5);
             }
         }*/
-        drive.setmoveInches(180, 2, speed_norm, 0);
+        drive.setMoveInches(180, 2, speed_norm, 0);
         pool.execute(drive);
         while (!isStopRequested() && H.vertpos.getVoltage() > .4) {
             H.vertical.setPosition(1);
         }
         H.vertical.setPosition(.5);
         //lower servo a little
-        drive.setmoveInches(0, 2, speed_norm, 0);
+        drive.setMoveInches(0, 2, speed_norm, 0);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();
@@ -387,7 +386,7 @@ public class autonomous extends LinearOpMode {
             H.vertical.setPosition(0);
         }
         H.vertical.setPosition(.5);
-        drive.setmoveInches(0, 6, speed_norm, 0);
+        drive.setMoveInches(0, 6, speed_norm, 0);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();
@@ -401,7 +400,7 @@ public class autonomous extends LinearOpMode {
             idle();
         }
         inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + .5;
-        drive.setmoveInches(0, inches_to_move, speed_norm, 0);
+        drive.setMoveInches(0, inches_to_move, speed_norm, 0);
         pool.execute(drive);
         H.vertical.setPosition(0);
         while (!isStopRequested() && !drive.moveDone) {

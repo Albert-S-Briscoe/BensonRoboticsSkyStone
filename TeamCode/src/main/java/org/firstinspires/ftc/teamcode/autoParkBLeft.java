@@ -69,19 +69,19 @@ public class autoParkBLeft extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-        //drive.moveInches(180, 5, .65);
-        /*drive.moveInches(0, 5, .65);
+        //drive.MoveInches(180, 5, .65);
+        /*drive.MoveInches(0, 5, .65);
         sleep(1000);
-        drive.moveInches(90, 5, .65);
-        drive.moveInches(270, 5, .65);*/
+        drive.MoveInches(90, 5, .65);
+        drive.MoveInches(270, 5, .65);*/
         //drive.rotate(90, .65);
         //drive.rotate(-90, .65);
-        drive.setmoveInches(0, 1, .65, 0);
+        drive.setMoveInches(0, 1, .65, 0);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();
         }
-        drive.setmoveInches(-90, 10, .65, -1);
+        drive.setMoveInches(-90, 10, .65, -1);
         pool.execute(drive);
         while (!isStopRequested() && !drive.moveDone) {
             idle();

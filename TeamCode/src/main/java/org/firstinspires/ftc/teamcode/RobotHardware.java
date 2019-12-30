@@ -31,8 +31,9 @@ public class RobotHardware {
     public DcMotor        rightfront;
     public DcMotor        leftback;
     public DcMotor        rightback;
+    public DcMotor        vertical;
     public Servo          grabber;
-    public Servo          vertical;
+    //public Servo          vertical;
     public Servo          L;
     public Servo          R;
 
@@ -44,9 +45,10 @@ public class RobotHardware {
         rightfront  = HM.get(DcMotor.class, "RF_drive");
         leftback    = HM.get(DcMotor.class, "LB_drive");
         rightback   = HM.get(DcMotor.class, "RB_drive");
+        vertical    = HM.get(DcMotor.class, "vertical");
 
         grabber     = HM.get(Servo.class, "grabber");
-        vertical    = HM.get(Servo.class, "vertical");
+        //vertical    = HM.get(Servo.class, "vertical");
         L           = HM.get(Servo.class, "GrabberLeft");
         R           = HM.get(Servo.class, "GrabberRight");
 
@@ -77,6 +79,9 @@ public class RobotHardware {
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        vertical.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        vertical.setDirection(DcMotor.Direction.FORWARD);
 
     }
 
