@@ -58,28 +58,30 @@ public class autonomous extends LinearOpMode {
 
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
 
-    private ElapsedTime runtime = new ElapsedTime();
-    private MecanumWheelDriver drive = new MecanumWheelDriver();
-    private RobotHardware H = new RobotHardware();
-    private ExecutorService pool = Executors.newFixedThreadPool(1);
+    private ElapsedTime         runtime  = new ElapsedTime();
+    private MecanumWheelDriver  drive    = new MecanumWheelDriver();
+    private ArmDriver           arm      = new ArmDriver();
+    private RobotHardware       H        = new RobotHardware();
+    private ExecutorService     pool     = Executors.newFixedThreadPool(2);
 
-    int mode = 1;
+    private int mode = 1;
 
-    int objleft;
-    int objright;
-    int objcenter;
-    int offset;
-    int blockPos;
+    private int objleft;
+    private int objright;
+    private int objcenter;
+    private int offset;
+    private int blockPos;
 
     //final double speed_slow = .35;
     final double sidewaysInches = 1.5;
     final double speed_norm = .4;
     final double speed_fast = 1;
-    final int field_side = 1;// -1 = red, 1 = blue
+    final double armPower = 0.3;
+    final byte field_side = 1;   // -1 = red, 1 = blue
     final int maxOffsetForMiddelBlock = 50;
 
-    boolean found = false;
-    double inches_to_move;
+    private boolean found = false;
+    private double inches_to_move;
 
     @Override
     public void runOpMode() {
@@ -136,7 +138,9 @@ public class autonomous extends LinearOpMode {
         drive.setrotate(0,0, false);
         drive.setMoveInches(0, 0, 0, 0);
         pool.shutdownNow();
-        H.vertical.setPosition(.5);
+        drive.stop();
+        drive.H.vertical.setPower(0);
+        H.vertical.setPower(0);
         H.leftfront.setPower(0);
         H.rightfront.setPower(0);
         H.leftback.setPower(0);
@@ -147,20 +151,16 @@ public class autonomous extends LinearOpMode {
 
     private void _1A() {
 
-        while (!isStopRequested() && (H.upperRange.getDistance(DistanceUnit.MM) > 430 || H.vertpos.getVoltage() > .65)) {
-            if (H.vertpos.getVoltage() > .65) {
-                H.vertical.setPosition(1);
-            } else {
-                H.vertical.setPosition(.5);
-            }
-            if (H.upperRange.getDistance(DistanceUnit.MM) > 430) {
+        arm.setMoveToDeg(30, armPower);
+        pool.execute(arm);
+
+        while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 430) {
                 drive.move(0, speed_norm, 0);
-            } else {
-                drive.stop();
-            }
         }
-        H.vertical.setPosition(.5);
+
         drive.stop();
+
+        waitForMoveDone(0);
 
     }
 
@@ -170,35 +170,33 @@ public class autonomous extends LinearOpMode {
 
     private void _2A() {
 
-        while (!isStopRequested() && H.vertpos.getVoltage() < 0.6) {
-            H.vertical.setPosition(0);
-        }
-        H.vertical.setPosition(.5);
-
+        arm.setMoveToDeg(25, armPower);
+        pool.execute(arm);
         drive.setrotate(90 * field_side, speed_norm, true);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
 
-        while (!isStopRequested() && H.vertpos.getVoltage() > 0.5) {
-            H.vertical.setPosition(1);
-        }
-        H.vertical.setPosition(.5);
+        waitForMoveDone(2);
 
-        drive.setMoveInches(0, 72, speed_fast, 90 * field_side);
+        arm.setMoveToDeg(13.5,0.3);
+        pool.execute(arm);
+
+        waitForMoveDone(0);
+
+        drive.setMoveInches(0, 60, speed_fast, 90 * field_side);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
-        while (!isStopRequested() && H.vertpos.getVoltage() < 0.6) {
-            H.vertical.setPosition(0);
-        }
-        H.vertical.setPosition(.5);
+
+        waitForMoveDone(1);
+
+        arm.setMoveToDeg(25, armPower);
+        pool.execute(arm);
+
         while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.INCH) > 26) {
             drive.moveWithGyro(0, speed_fast * Range.clip((H.upperRange.getDistance(DistanceUnit.INCH) - 26) / 10, 0.25, 1 ), 90 * field_side);
         }
+
         drive.stop();
+
+        waitForMoveDone(0);
     }
 
     private void _2B() {
@@ -212,9 +210,7 @@ public class autonomous extends LinearOpMode {
         drive.setRampDown(25, 0.5);
         drive.setrotate(90 * field_side, speed_fast, false);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(1);
         drive.setRampDown(0, 0);
         drive.move(0, speed_fast, 0);
         sleep(1100);
@@ -227,22 +223,14 @@ public class autonomous extends LinearOpMode {
 
     private void _4A() {
 
-        telemetry.addData("stat", "4A");
-        telemetry.update();
         drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(1);
         //drive.move(90 * field_side, speed_norm, 0);
         //sleep(600);
         drive.setMoveInches(180, 40, speed_fast, -1);
         pool.execute(drive);
-        telemetry.addData("stat", "moveing");
-        telemetry.update();
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(1);
     }
 
     private void _4B() {
@@ -308,7 +296,7 @@ public class autonomous extends LinearOpMode {
                 }
             }
         }
-        if (!isStopRequested()) {
+        if (!isStopRequested() && blockPos != 0) {
             drive.setMoveInches(90 * blockPos, 8 * sidewaysInches, speed_fast, 0);
         }
     }
@@ -370,46 +358,36 @@ public class autonomous extends LinearOpMode {
         }*/
         drive.setMoveInches(180, 2, speed_norm, 0);
         pool.execute(drive);
-        while (!isStopRequested() && H.vertpos.getVoltage() > .4) {
-            H.vertical.setPosition(1);
-        }
-        H.vertical.setPosition(.5);
-        //lower servo a little
+        arm.setMoveToDeg(0, armPower);
+        pool.execute(arm);
+        waitForMoveDone(2);
         drive.setMoveInches(0, 2, speed_norm, 0);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(1);
         H.grabber.setPosition(1);
-        sleep(750); //wait for servo to move
-        while (!isStopRequested() && H.vertpos.getVoltage() < 0.5) {
-            H.vertical.setPosition(0);
-        }
-        H.vertical.setPosition(.5);
+        sleep(750); // wait for servo to move
+        arm.setMoveToDeg(15, armPower);
+        pool.execute(arm);
         drive.setMoveInches(0, 6, speed_norm, 0);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(2);
     }
 
     private void placeSkystoneAndGrab() {
+
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        waitForMoveDone(1);
         inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + .5;
         drive.setMoveInches(0, inches_to_move, speed_norm, 0);
         pool.execute(drive);
-        H.vertical.setPosition(0);
-        while (!isStopRequested() && !drive.moveDone) {
-            idle();
-        }
+        arm.setMoveToDeg(45, armPower);
+        pool.execute(arm);
+        waitForMoveDone(1);
         H.grab(true);
-        H.vertical.setPosition(0.5);
+        waitForMoveDone(0);
         H.grabber.setPosition(0);
-        sleep(750);
+        sleep(500);
 
     }
 
@@ -421,4 +399,43 @@ public class autonomous extends LinearOpMode {
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT);//, LABEL_SECOND_ELEMENT);
     }
+
+    private void waitForMoveDone(int moveDriver) {
+
+        // 0 = ArmDriver
+        // 1 = MecanumWheelDriver
+        // 2 = both
+
+        switch (moveDriver) {
+            case 0:
+
+                while (!isStopRequested() && !drive.moveDone) {
+
+                    idle();
+
+                }
+                break;
+
+            case 1:
+
+                while (!isStopRequested() && !arm.moveDone) {
+
+                    idle();
+
+                }
+                break;
+
+            case 2:
+
+                while (!isStopRequested() && !drive.moveDone && !arm.moveDone) {
+
+                    idle();
+
+                }
+                break;
+
+        }
+
+    }
+
 }

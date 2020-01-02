@@ -44,7 +44,7 @@ import com.qualcomm.robotcore.util.Range;
         if you are going to run anything on another thread then add this
         at the top of runOpMode()
 
-            ExecutorService pool = Executors.newFixedThreadPool(1);
+            ExecutorService pool = Executors.newFixedThreadPool(2);
 
         to call a function use this format
 
@@ -71,7 +71,7 @@ public class MecanumWheelDriver implements Runnable {
     private double MaxSpeed;
     private boolean toDegree;
 
-    private byte moveMode; // 1 = moveInches(), 2 = rotate(), 3 = MoveArmToDeg()
+    private boolean isMove; // true = moveInches(), false = rotate()
     public boolean moveDone = false;
 
     private final double COUNTS_PER_REVOLUTION = 288;
@@ -113,19 +113,15 @@ public class MecanumWheelDriver implements Runnable {
          * then run this to start it
          *    pool.execute(drive);
          *
-         * this is only for MoveInches(), Rotate() and MoveArmToDeg() functions
+         * this is only for MoveInches() and Rotate() functions
          */
 
-        switch (moveMode) {
-            case 1:
-                MoveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
-                break;
-            case 2:
-                rotate(/*Degrees, MaxSpeed, toDegree*/);
-                break;
-            case 3:
-                MoveArmToDeg();
-                break;
+        if (isMove) {
+
+            MoveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
+
+        } else {
+            rotate(/*Degrees, MaxSpeed, toDegree*/);
         }
 
         moveDone = true;
@@ -268,7 +264,7 @@ public class MecanumWheelDriver implements Runnable {
         this.speed = speed;
         this.agl_frwd = agl_frwd;
 
-        moveMode = 1;
+        isMove = true;
         moveDone = false;
 
     }
@@ -375,49 +371,17 @@ public class MecanumWheelDriver implements Runnable {
         H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        /*while (H.leftfront.getCurrentPosition() != leftfrontTarget && H.rightfront.getCurrentPosition() != rightfrontTarget && H.leftback.getCurrentPosition() != leftbackTarget && H.rightback.getCurrentPosition() != rightbackTarget) {
-            offset = FindDegOffset(H.getheading(), agl_frwd + 180);
-
-            leftfrontPower = LF_RB * speed - offset/45;
-            rightfrontPower = RF_LB * speed + offset/45;
-            leftbackPower = RF_LB * speed - offset/45;
-            rightbackPower = LF_RB * speed + offset/45;
-
-            if (LF_RB > RF_LB) {
-                if (offset > 0) {
-                    multiplier = 1/Math.abs(rightbackPower);
-                } else {
-                    multiplier = 1/Math.abs(leftfrontPower);
-                }
-            } else {
-                if (offset > 0) {
-                    multiplier = 1/Math.abs(rightfrontPower);
-                } else {
-                    multiplier = 1/Math.abs(leftbackPower);
-                }
-            }
-
-            H.leftfront.  setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
-            H.rightfront. setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
-            H.leftback.   setPower(Range.clip(leftbackPower * multiplier, -1, 1));
-            H.rightback.  setPower(Range.clip(rightbackPower * multiplier, -1, 1));
-
-        }
-
-        H.leftfront.  setPower(0);
-        H.rightfront. setPower(0);
-        H.leftback.   setPower(0);
-        H.rightback.  setPower(0);*/
-
     }
 
     void setrotate(int Degrees, double MaxSpeed, boolean toDegree) {
+
         this.Degrees = Degrees;
         this.MaxSpeed = MaxSpeed;
         this.toDegree = toDegree;
 
-        moveMode = 2;
+        isMove = false;
         moveDone = false;
+
     }
 
     void rotate(/*int Degrees, double MaxSpeed, boolean toDegree*/) {
@@ -447,7 +411,6 @@ public class MecanumWheelDriver implements Runnable {
         double heading = H.getheading();
         double Target;
         int drect;
-        //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
         if (toDegree) {
             Target = Degrees + 180;
@@ -460,7 +423,6 @@ public class MecanumWheelDriver implements Runnable {
             offset = FindDegOffset(heading, Target);
             speed = Range.clip( Math.abs(offset / rampDownAngl), speedmin, MaxSpeed);
             drect = (int)Range.clip(offset * 100, -1, 1);
-            //H.angles   = H.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
             H.leftfront.  setPower(-speed * drect);
             H.rightfront. setPower(speed * drect);
@@ -506,39 +468,6 @@ public class MecanumWheelDriver implements Runnable {
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);*/
-    }
-
-    void setMoveArmToDeg(double armMove, double maxArmPower) {
-
-        this.armTargetAngle = Range.clip(armMove, 0, 135);
-        this.maxArmPower = maxArmPower;
-
-        moveMode = 3;
-        moveDone = false;
-
-    }
-
-    void MoveArmToDeg() {
-
-         do {
-
-             armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
-             armOffAngle = Math.abs(armAngle - armTargetAngle);
-
-             if (armAngle > armTargetAngle) {
-
-                 H.vertical.setPower(maxArmPower - Range.clip(1 / armOffAngle, 0, maxArmPower / 2 ));
-
-             } else {
-
-                 H.vertical.setPower(-maxArmPower + Range.clip(1 / armOffAngle, 0, maxArmPower / 2 ));
-
-             }
-
-        } while (armOffAngle > 5);
-
-        H.vertical.setPower(0);
-
     }
 
     void setRampDown(int ramp_Down_Angle, double minimum_Speed) {
