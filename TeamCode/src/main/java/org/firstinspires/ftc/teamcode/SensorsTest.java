@@ -39,9 +39,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
+import com.qualcomm.robotcore.hardware.configuration.DeviceConfiguration;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -83,7 +85,6 @@ public class SensorsTest extends LinearOpMode {
   @Override public void runOpMode() throws InterruptedException {
 
     sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
-
     Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)sensorRange;
     // Get a reference to the RelativeLayout so we can later change the background
     // color of the Robot Controller app to match the hue detected by the RGB sensor.
@@ -177,6 +178,7 @@ public class SensorsTest extends LinearOpMode {
       telemetry.addData("range", String.format("%.01f cm", sensorRange.getDistance(DistanceUnit.CM)));
       telemetry.addData("range", String.format("%.01f m", sensorRange.getDistance(DistanceUnit.METER)));
       telemetry.addData("range", String.format("%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
+
 
 
       Color.colorToHSV(colors.toColor(), hsvValues);

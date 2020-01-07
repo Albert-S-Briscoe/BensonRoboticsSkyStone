@@ -155,11 +155,11 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
             }
 
             ////////////////////////////// Move Arm //////////////////////////////
-            if (useTrigArm) {
+            /*if (useTrigArm) {
                 if (Math.abs(armMove - armPos) > 0.075) {
 
                 /*armAngle = H.vertpos.getVoltage() * degreesPerVolt - zeroVolts;
-                armPos = Math.sin(armAngle) / armLength;*/
+                armPos = Math.sin(armAngle) / armLength;//
                     armOffAngle = Math.abs(armAngle - Math.toDegrees(Math.asin(armMove / armLength)));
 
                     if (armPos > armMove) {
@@ -179,7 +179,7 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
                     V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
                 }
                 H.vertical.setPosition(V_pos);
-            }
+            }*/
 
             ////////////////////////////// Buttons //////////////////////////////
 

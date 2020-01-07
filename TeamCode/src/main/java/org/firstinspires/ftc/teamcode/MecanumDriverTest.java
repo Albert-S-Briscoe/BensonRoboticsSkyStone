@@ -87,8 +87,10 @@ public class MecanumDriverTest extends LinearOpMode {
                 is_dpad_left_button = true;
             } else if (gamepad1.y && !isybutton) {
                 //drive.MoveInches(0, 25, .65, 0);
-                drive.setMoveInches(0, 25, .65, 0);
+                drive.setMoveInches(0, 20, 0.65, 0);
                 pool.execute(drive);
+                sleep(500);
+                drive.changeTargetInches(40);
                 isybutton = true;
             } else if (gamepad1.x && !isxbutton) {
                 drive.setMoveInches(-90, 25, .65, -90);
@@ -148,6 +150,7 @@ public class MecanumDriverTest extends LinearOpMode {
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("heading", "%.3f", drive.H.getheading());
+            telemetry.addData("speed", drive.speed);
             telemetry.update();
         }
         pool.shutdownNow();

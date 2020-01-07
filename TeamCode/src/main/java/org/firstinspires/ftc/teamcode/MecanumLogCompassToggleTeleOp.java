@@ -145,7 +145,7 @@ public class MecanumLogCompassToggleTeleOp extends LinearOpMode {
             } else {
                 V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
             }
-            H.vertical.setPosition(V_pos);
+            //H.vertical.setPosition(V_pos);
 
             if (gamepad1.right_bumper | gamepad1.b) {
                 if (!vertPosButton) {

@@ -64,7 +64,7 @@ public class MecanumWheelDriver implements Runnable {
 
     private int Angle_Degrees;
     private double inches;
-    private double speed;
+    public double speed;
     private double agl_frwd;
 
     private int Degrees;
@@ -72,7 +72,7 @@ public class MecanumWheelDriver implements Runnable {
     private boolean toDegree;
 
     private boolean isMove; // true = moveInches(), false = rotate()
-    public boolean moveDone = false;
+    public boolean moveDone = true;
 
     private final double COUNTS_PER_REVOLUTION = 288;
     private final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
@@ -91,6 +91,14 @@ public class MecanumWheelDriver implements Runnable {
     private double armTargetAngle;
     private double armAngle;
     private double armOffAngle;
+
+    int LF_RBtarget;
+    int RF_LBtarget;
+
+    int leftfrontStartPos;
+    int rightfrontStartPos;
+    int leftbackStartPos;
+    int rightbackStartPos;
 
     HardwareMap HM;
 
@@ -121,7 +129,9 @@ public class MecanumWheelDriver implements Runnable {
             MoveInches(/*Angle_Degrees, inches, speed, agl_frwd*/);
 
         } else {
+
             rotate(/*Degrees, MaxSpeed, toDegree*/);
+
         }
 
         moveDone = true;
@@ -269,6 +279,35 @@ public class MecanumWheelDriver implements Runnable {
 
     }
 
+    void changeTargetInches(double inches) {
+
+        double Angle = Math.toRadians(Angle_Degrees + 45);// - Math.PI / 4;
+        double cosAngle = Math.cos(Angle);
+        double sinAngle = Math.sin(Angle);
+        double LF_RB;  //leftfront and rightback motors
+        double RF_LB;  //rightfront and leftback motors
+        double multiplier;
+
+        if (Math.abs(cosAngle) > Math.abs(sinAngle)) {   //scale the motor's speed so that at least one of them = 1
+            multiplier = 1 / Math.abs(cosAngle);
+            LF_RB = multiplier * cosAngle;
+            RF_LB = multiplier * sinAngle;
+        } else {
+            multiplier = 1 / Math.abs(sinAngle);
+            LF_RB = multiplier * cosAngle;
+            RF_LB = multiplier * sinAngle;
+        }
+
+        LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
+        RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
+
+        H.leftfront.  setTargetPosition(leftfrontStartPos + LF_RBtarget);
+        H.rightfront. setTargetPosition(rightfrontStartPos + RF_LBtarget);
+        H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
+        H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
+
+    }
+
     void MoveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
@@ -312,23 +351,23 @@ public class MecanumWheelDriver implements Runnable {
             RF_LB = multiplier * sinAngle;
         }
 
-        int LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
-        int RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
+        leftfrontStartPos = H.leftfront.getCurrentPosition();
+        rightfrontStartPos = H.rightfront.getCurrentPosition();
+        leftbackStartPos = H.leftback.getCurrentPosition();
+        rightbackStartPos = H.rightback.getCurrentPosition();
 
-        H.leftfront.  setTargetPosition(H.leftfront.  getCurrentPosition() + LF_RBtarget);
-        H.rightfront. setTargetPosition(H.rightfront. getCurrentPosition() + RF_LBtarget);
-        H.leftback.   setTargetPosition(H.leftback.   getCurrentPosition() + RF_LBtarget);
-        H.rightback.  setTargetPosition(H.rightback.  getCurrentPosition() + LF_RBtarget);
+        LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
+        RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
+
+        H.leftfront.  setTargetPosition(leftfrontStartPos + LF_RBtarget);
+        H.rightfront. setTargetPosition(rightfrontStartPos + RF_LBtarget);
+        H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
+        H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
 
         H.leftfront.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.rightfront. setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.leftback.   setMode(DcMotor.RunMode.RUN_TO_POSITION);
         H.rightback.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        H.leftfront.  setPower(LF_RB * speed);
-        H.rightfront. setPower(RF_LB * speed);
-        H.leftback.   setPower(RF_LB * speed);
-        H.rightback.  setPower(LF_RB * speed);
 
         while (H.leftfront.isBusy() && H.rightfront.isBusy() && H.leftback.isBusy() && H.rightback.isBusy()) {
             if (selfcorrect) {
@@ -353,10 +392,17 @@ public class MecanumWheelDriver implements Runnable {
                     }
                 }
 
-                H.leftfront.setPower(Range.clip(leftfrontPower * multiplier, -1, 1));
-                H.rightfront.setPower(Range.clip(rightfrontPower * multiplier, -1, 1));
-                H.leftback.setPower(Range.clip(leftbackPower * multiplier, -1, 1));
-                H.rightback.setPower(Range.clip(rightbackPower * multiplier, -1, 1));
+                H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
+                H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
+                H.leftback.setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
+                H.rightback.setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+            } else {
+
+                H.leftfront.setPower(LF_RB * speed);
+                H.rightfront.setPower(RF_LB * speed);
+                H.leftback.setPower(RF_LB * speed);
+                H.rightback.setPower(LF_RB * speed);
+
             }
 
         }
