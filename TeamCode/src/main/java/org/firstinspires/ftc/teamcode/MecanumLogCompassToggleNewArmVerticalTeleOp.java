@@ -212,23 +212,24 @@ public class MecanumLogCompassToggleNewArmVerticalTeleOp extends LinearOpMode {
 
                     if (armPos > armMove) {
 
-                        H.vertical.setPower(0.3 - Range.clip(1 / armOffAngle, 0, 0.2));
+                        H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
                     } else {
 
-                        H.vertical.setPower(-0.3 + Range.clip(1 / armOffAngle, 0, 0.2));
+                        H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
                     }
 
                 } else {
 
-                    H.vertical.setPower(0);
+                    H.vertical.setPosition(0.5);
 
                 }
 
             } else {
 
-                H.vertical.setPower(Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle));
+                //H.vertical.setPower(Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle));
+                H.vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle)) / 2 + 0.5);
 
             }
 

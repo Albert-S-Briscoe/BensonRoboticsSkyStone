@@ -31,7 +31,7 @@ public class RobotHardware {
     public DcMotor        rightfront;
     public DcMotor        leftback;
     public DcMotor        rightback;
-    public DcMotor        vertical;
+    public Servo        vertical;
     public Servo          grabber;
     //public Servo          vertical;
     public Servo          L;
@@ -45,17 +45,15 @@ public class RobotHardware {
         rightfront  = HM.get(DcMotor.class, "RF_drive");
         leftback    = HM.get(DcMotor.class, "LB_drive");
         rightback   = HM.get(DcMotor.class, "RB_drive");
-        vertical    = HM.get(DcMotor.class, "vertical");
 
         grabber     = HM.get(Servo.class, "grabber");
-        //vertical    = HM.get(Servo.class, "vertical");
+        vertical    = HM.get(Servo.class, "vertical");
         L           = HM.get(Servo.class, "GrabberLeft");
         R           = HM.get(Servo.class, "GrabberRight");
 
-        limit       = HM.get(DigitalChannel.class, "limit");
         vertpos     = HM.get(AnalogInput.class, "vert_pos");
-        upperRange  = HM.get(DistanceSensor.class, "front_range");
-        lowerRange  = HM.get(DistanceSensor.class, "back_range");
+        upperRange  = HM.get(DistanceSensor.class, "upper_range");
+        lowerRange  = HM.get(DistanceSensor.class, "lower_range");
         imu         = HM.get(BNO055IMU.class, "imu");
 
         ////////////////////////////// Parameters //////////////////////////////
@@ -64,8 +62,6 @@ public class RobotHardware {
         parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
         parameters.calibrationDataFile  = "BNO055IMUCalibration.json";
         imu.initialize(parameters);
-
-        limit.setMode(DigitalChannel.Mode.INPUT);
 
         Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor) upperRange;
         Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) lowerRange;
@@ -79,9 +75,6 @@ public class RobotHardware {
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        vertical.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        vertical.setDirection(DcMotor.Direction.FORWARD);
 
     }
 

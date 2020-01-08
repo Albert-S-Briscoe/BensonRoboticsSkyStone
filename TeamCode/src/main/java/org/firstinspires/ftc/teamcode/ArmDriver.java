@@ -119,17 +119,17 @@ public class ArmDriver implements Runnable {
 
              if (armAngle > armTargetAngle) {
 
-                 H.vertical.setPower(maxArmPower - Range.clip(1 / armOffAngle, 0, maxArmPower - 0.25 ));
+                 H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
              } else {
 
-                 H.vertical.setPower(-maxArmPower + Range.clip(1 / armOffAngle, 0, maxArmPower - 0.25 ));
+                 H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
              }
 
         } while (armOffAngle > 2.5);
 
-        H.vertical.setPower(0);
+        H.vertical.setPosition(0.5);
 
     }
 
@@ -155,17 +155,15 @@ public class ArmDriver implements Runnable {
 
             if (armPos > inches) {
 
-                H.vertical.setPower(maxArmPower - Range.clip(1 / armOffAngle, 0, maxArmPower - 0.25));
+                H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
             } else {
 
-                H.vertical.setPower(-maxArmPower + Range.clip(1 / armOffAngle, 0, maxArmPower - 0.25));
+                H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
             }
 
         } while (Math.abs(inches - armPos) > 0.075);
-
-        H.vertical.setPower(0);
 
     }
 

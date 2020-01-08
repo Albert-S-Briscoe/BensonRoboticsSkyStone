@@ -40,6 +40,8 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
@@ -64,9 +66,14 @@ public class autocenter extends LinearOpMode {
     int objleft;
     int objright;
     int objcenter;
-    double offset;
+    int offset;
+    private int blockPos;
 
     final long degPerSec = 30;
+    final double sidewaysInches = 1.19;
+    final int maxOffsetForMiddelBlock = 50;
+
+    private boolean found = false;
 
     //final double speed_slow = .35;
     final double speed_norm = .35;
@@ -93,6 +100,7 @@ public class autocenter extends LinearOpMode {
         drive.init(hardwareMap);
         RobotHardware H = new RobotHardware();
         H.init(hardwareMap);
+        ExecutorService pool = Executors.newFixedThreadPool(1);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -102,7 +110,7 @@ public class autocenter extends LinearOpMode {
 
         ////////////////////////////////////////////////////////////////////////////////////////////
 
-        offset = -500 * field_side;
+        /*offset = -500 * field_side;
         while (opModeIsActive() && mode == 2) {
 
             if (tfod != null) {
@@ -140,10 +148,54 @@ public class autocenter extends LinearOpMode {
                 telemetry.addData("power: ", speed_norm * -Range.clip(offset / 200, -1, 1));
                 telemetry.addData("Status", "Run Time: " + runtime.toString());
                 telemetry.update();
+            }*/
+
+        while (!isStopRequested() && runtime.seconds() < 6 && !found) {
+            if (tfod != null) {
+                telemetry.addData("TFmode = ", mode);
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+
+                    // step through the list of recognitions and display boundary info.
+                    int i = 0;
+                    for (Recognition recognition : updatedRecognitions) {
+                        if (recognition.getLabel().equals("Skystone")) {
+                            objright = (int) recognition.getTop();
+                            objleft = (int) recognition.getBottom();
+                            objcenter = (objleft + objright) / 2;
+                            offset = objcenter - 640;
+                            if (Math.abs(offset) < maxOffsetForMiddelBlock) {
+                                blockPos = 0;
+                            } else {
+                                blockPos = Range.clip(offset, -1, 1);
+                            }
+                            found = true;
+                            break;
+                        }
+                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                                recognition.getLeft(), recognition.getTop());
+                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                                recognition.getRight(), recognition.getBottom());
+                    }
+                }
             }
         }
-        ////////////////////////////////////////////////////////////////////////////////////////////
+        if (!isStopRequested() && blockPos != 0) {
+            drive.setMoveInches(90 * blockPos, 8 * sidewaysInches, speed_norm, 0);
+            pool.execute(drive);
+        }
+
+        telemetry.addData("block pos", blockPos);
+        telemetry.update();
+        while (!drive.moveDone && !isStopRequested()) {
+            idle();
+        }
     }
+        ////////////////////////////////////////////////////////////////////////////////////////////
 
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(

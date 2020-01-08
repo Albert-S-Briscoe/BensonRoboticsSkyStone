@@ -89,11 +89,12 @@ public class TeleOpLite extends LinearOpMode {
         double RF_LB;  //rightfront and leftback motors
 
         final double logCurve = 35;
-        final double zeroVolts = 0.38;
+        final double zeroVolts = 0.33;
         final double degreesPerVolt = 111;
+        final int maxDeg = 120;
         final double armLength = 11.75;
         final double armOffset = 0;
-        final double rampDownAngle = 60;
+        final double rampDownAngle = 20;
 
         double y;
         double x;
@@ -114,6 +115,8 @@ public class TeleOpLite extends LinearOpMode {
         boolean speedButton = false;
         boolean useCompass = true;
         boolean compassButton = false;
+        boolean compensatebutton = false;
+        boolean useArmCompensate = true;
         boolean grabberPosButton = false;
         double  position = 0;
 
@@ -166,6 +169,8 @@ public class TeleOpLite extends LinearOpMode {
             armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
             grabberToRobot = Math.cos(Math.toRadians(armAngle)) * armLength - armOffset;
 
+            ////////////////////////////// Mecanum Wheel Stuff //////////////////////////////
+
             if (Math.abs(cosAngle) > Math.abs(sinAngle)) {   //scale the motor's speed so that at least one of them = 1
 
                 multiplier = 1 / Math.abs(cosAngle);
@@ -194,25 +199,10 @@ public class TeleOpLite extends LinearOpMode {
 
             }
 
-                if (slowDown) {
-
-                    H.leftfront.setPower(leftfrontPower / 2);
-                    H.rightfront.setPower(rightfrontPower / 2);
-                    H.leftback.setPower(leftbackPower / 2);
-                    H.rightback.setPower(rightbackPower / 2);
-
-                } else {
-
-                    H.leftfront.setPower(leftfrontPower);
-                    H.rightfront.setPower(rightfrontPower);
-                    H.leftback.setPower(leftbackPower);
-                    H.rightback.setPower(rightbackPower);
-
-                }
 
             ////////////////////////////// Compensate For Arm //////////////////////////////
 
-            if (stickTotal < 0.02) {
+            if (stickTotal < 0.02 && useArmCompensate) {
 
                 inchesToCompensate += grabberToRobot - previousArmPos;
 
@@ -235,33 +225,60 @@ public class TeleOpLite extends LinearOpMode {
 
             } else {
 
-                this.LF_RB = 0;
-                this.RF_LB = 0;
-                first = true;
+                if (slowDown) {
 
-                H.leftfront.  setPower(0);
-                H.rightfront. setPower(0);
-                H.leftback.   setPower(0);
-                H.rightback.  setPower(0);
+                    H.leftfront.setPower(leftfrontPower / 2);
+                    H.rightfront.setPower(rightfrontPower / 2);
+                    H.leftback.setPower(leftbackPower / 2);
+                    H.rightback.setPower(rightbackPower / 2);
 
-                H.leftfront.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                } else {
 
+                    H.leftfront.setPower(leftfrontPower);
+                    H.rightfront.setPower(rightfrontPower);
+                    H.leftback.setPower(leftbackPower);
+                    H.rightback.setPower(rightbackPower);
+
+                }
+
+                if (LF_RB != 0 || RF_LB != 0) {
+
+                    this.LF_RB = 0;
+                    this.RF_LB = 0;
+                    first = true;
+
+                    H.leftfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                }
             }
-
-            ////////////////////////////// Mecanum Wheel Stuff //////////////////////////////
-
-
 
             ////////////////////////////// Move Arm //////////////////////////////
 
-                H.vertical.setPower(Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle));
+                H.vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (maxDeg - armAngle) / rampDownAngle)) / 2 + 0.5);
 
             ////////////////////////////// Buttons //////////////////////////////
 
-            if (gamepad1.right_bumper) {
+            if (gamepad1.b) {
+
+                if (!compensatebutton) {
+
+                    useArmCompensate = !useArmCompensate;
+                    compensatebutton = true;
+
+                    previousArmPos = grabberToRobot;
+
+                }
+
+            } else {
+
+                compensatebutton = false;
+
+            }
+
+            if (gamepad1.right_bumper || gamepad1.a) {
 
                 if (!grabberPosButton) {
 
@@ -343,10 +360,6 @@ public class TeleOpLite extends LinearOpMode {
 
             }
 
-                telemetry.addData("grabberToRobot", grabberToRobot);
-                telemetry.addData("inchesToCompensate", inchesToCompensate);
-                telemetry.update();
-
         }
 
         setMoveInches(0, 0, 0, -2);
@@ -370,11 +383,6 @@ public class TeleOpLite extends LinearOpMode {
         double cosAngle = Math.cos(Angle);
         double sinAngle = Math.sin(Angle);
         double multiplier;
-        double offset;
-        double leftfrontPower;
-        double rightfrontPower;
-        double leftbackPower;
-        double rightbackPower;
 
         if (LF_RB == 0 && RF_LB == 0) {
 
@@ -415,43 +423,12 @@ public class TeleOpLite extends LinearOpMode {
             H.leftback.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             H.rightback.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        } else {
-            if (selfcorrect) {
-                offset = FindDegOffset(H.getheading(), agl_frwd + 180);
-
-                leftfrontPower = LF_RB * speed - offset / 45;
-                rightfrontPower = RF_LB * speed + offset / 45;
-                leftbackPower = RF_LB * speed - offset / 45;
-                rightbackPower = LF_RB * speed + offset / 45;
-
-                if (LF_RB > RF_LB) {
-                    if (offset > 0) {
-                        multiplier = 1 / Math.abs(rightbackPower);
-                    } else {
-                        multiplier = 1 / Math.abs(leftfrontPower);
-                    }
-                } else {
-                    if (offset > 0) {
-                        multiplier = 1 / Math.abs(rightfrontPower);
-                    } else {
-                        multiplier = 1 / Math.abs(leftbackPower);
-                    }
-                }
-
-                H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
-                H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
-                H.leftback.setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
-                H.rightback.setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
-            } else {
-
-                H.leftfront.setPower(LF_RB * speed);
-                H.rightfront.setPower(RF_LB * speed);
-                H.leftback.setPower(RF_LB * speed);
-                H.rightback.setPower(LF_RB * speed);
-
-            }
-
         }
+
+            H.leftfront.setPower(LF_RB * speed);
+            H.rightfront.setPower(RF_LB * speed);
+            H.leftback.setPower(RF_LB * speed);
+            H.rightback.setPower(LF_RB * speed);
 
     }
 
@@ -493,27 +470,6 @@ public class TeleOpLite extends LinearOpMode {
         H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
         H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
 
-    }
-
-    private double FindDegOffset(double DegCurrent, double TargetDeg) {
-
-        /**DegCurrent, the current degree of the robot value between 0 and 360
-         * TargetDeg, the degree with which to find the offset
-         * Finds the angle between current degree and the target degree
-         * returns a value between -180 and 180
-         * output will be negative if the current degree is left of the target, positive if on the right
-         *    0
-         * 90   -90
-         *   180
-         */
-
-        double offset = TargetDeg - DegCurrent;
-        if (offset > 180) {
-            offset -= 360;
-        } else if (offset < -180) {
-            offset += 360;
-        }
-        return offset;
     }
 
 }

@@ -73,7 +73,7 @@ public class autonomous extends LinearOpMode {
     private int blockPos;
 
     //final double speed_slow = .35;
-    final double sidewaysInches = 1.5;
+    final double sidewaysInches = 1.19;
     final double speed_norm = .4;
     final double speed_fast = 1;
     final double armPower = 0.3;
@@ -111,6 +111,7 @@ public class autonomous extends LinearOpMode {
 
         H.grab(false);
         drive.RunWithEncoders(true);
+
         if (opModeIsActive()) {
             _1A();
         }
@@ -139,8 +140,8 @@ public class autonomous extends LinearOpMode {
         drive.setMoveInches(0, 0, 0, 0);
         pool.shutdownNow();
         drive.stop();
-        drive.H.vertical.setPower(0);
-        H.vertical.setPower(0);
+        drive.H.vertical.setPosition(0.5);
+        H.vertical.setPosition(0.5);
         H.leftfront.setPower(0);
         H.rightfront.setPower(0);
         H.leftback.setPower(0);
@@ -262,7 +263,7 @@ public class autonomous extends LinearOpMode {
     }
 
     private void findSkystone() {
-        while (!isStopRequested() && runtime.seconds() < 6 && !found) {
+        while (!isStopRequested() && runtime.seconds() < 7 && !found) {
             if (tfod != null) {
                 telemetry.addData("TFmode = ", mode);
                 // getUpdatedRecognitions() will return null if no new information is available since
@@ -298,6 +299,8 @@ public class autonomous extends LinearOpMode {
         }
         if (!isStopRequested() && blockPos != 0) {
             drive.setMoveInches(90 * blockPos, 8 * sidewaysInches, speed_fast, 0);
+            pool.execute(drive);
+            waitForMoveDone(0);
         }
     }
 

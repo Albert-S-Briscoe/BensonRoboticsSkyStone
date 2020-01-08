@@ -49,6 +49,7 @@ public class MecanumDriverTest extends LinearOpMode {
     boolean isbbutton = false;
     boolean isabutton = false;
     boolean isxbutton = false;
+    final double sidewaysInches = 1.19;
 
 
     @Override
@@ -93,7 +94,7 @@ public class MecanumDriverTest extends LinearOpMode {
                 drive.changeTargetInches(40);
                 isybutton = true;
             } else if (gamepad1.x && !isxbutton) {
-                drive.setMoveInches(-90, 25, .65, -90);
+                drive.setMoveInches(90, 25 * sidewaysInches, .65, 0);
                 pool.execute(drive);
                 isxbutton = true;
             } else if (gamepad1.a && !isabutton) {
@@ -101,7 +102,7 @@ public class MecanumDriverTest extends LinearOpMode {
                 pool.execute(drive);
                 isabutton = true;
             } else if (gamepad1.b && !isbbutton) {
-                drive.setMoveInches(90, 25, .65, 0);
+                drive.setMoveInches(-90, 25 * sidewaysInches, .65, 0);
                 pool.execute(drive);
                 isbbutton = true;
             }
