@@ -74,10 +74,10 @@ public class autonomous extends LinearOpMode {
 
     //final double speed_slow = .35;
     final double sidewaysInches = 1.19;
-    final double speed_norm = .4;
+    final double speed_norm = .6;
     final double speed_fast = 1;
     final double armPower = 0.3;
-    final byte field_side = 1;   // -1 = red, 1 = blue
+    final byte field_side = -1;   // -1 = red, 1 = blue
     final int maxOffsetForMiddelBlock = 50;
 
     private boolean found = false;
@@ -101,6 +101,7 @@ public class autonomous extends LinearOpMode {
         }
 
         drive.init(hardwareMap);
+        arm.init(hardwareMap);
         H.init(hardwareMap);
 
         telemetry.addData("Status", "Initialized");
@@ -152,16 +153,14 @@ public class autonomous extends LinearOpMode {
 
     private void _1A() {
 
-        arm.setMoveToDeg(30, armPower);
+        arm.setMoveToDeg(30);
         pool.execute(arm);
 
-        while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 430) {
+        while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 550) {
                 drive.move(0, speed_norm, 0);
         }
 
         drive.stop();
-
-        waitForMoveDone(0);
 
     }
 
@@ -171,25 +170,23 @@ public class autonomous extends LinearOpMode {
 
     private void _2A() {
 
-        arm.setMoveToDeg(25, armPower);
-        pool.execute(arm);
         drive.setrotate(90 * field_side, speed_norm, true);
         pool.execute(drive);
+        waitForMoveDone(0);
 
-        waitForMoveDone(2);
+        arm.setMoveToDeg(20);
+        pool.execute(arm);
+        waitForMoveDone(1);
 
-        arm.setMoveToDeg(13.5,0.3);
+        drive.setMoveInches(0, 60, speed_fast, 90 * field_side);
+        pool.execute(drive);
+        sleep(1500);
+        arm.setMoveToDeg(35);
         pool.execute(arm);
 
         waitForMoveDone(0);
 
-        drive.setMoveInches(0, 60, speed_fast, 90 * field_side);
-        pool.execute(drive);
 
-        waitForMoveDone(1);
-
-        arm.setMoveToDeg(25, armPower);
-        pool.execute(arm);
 
         while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.INCH) > 26) {
             drive.moveWithGyro(0, speed_fast * Range.clip((H.upperRange.getDistance(DistanceUnit.INCH) - 26) / 10, 0.25, 1 ), 90 * field_side);
@@ -197,7 +194,6 @@ public class autonomous extends LinearOpMode {
 
         drive.stop();
 
-        waitForMoveDone(0);
     }
 
     private void _2B() {
@@ -208,6 +204,9 @@ public class autonomous extends LinearOpMode {
         drive.move(-90 * field_side, speed_fast, 0);
         sleep(750);
         drive.stop();
+        drive.setMoveInches(180, 30, speed_fast, 0);
+        pool.execute(drive);
+        waitForMoveDone(0);
         drive.setRampDown(25, 0.5);
         drive.setrotate(90 * field_side, speed_fast, false);
         pool.execute(drive);
@@ -226,12 +225,12 @@ public class autonomous extends LinearOpMode {
 
         drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
-        waitForMoveDone(1);
+        waitForMoveDone(0);
         //drive.move(90 * field_side, speed_norm, 0);
         //sleep(600);
-        drive.setMoveInches(180, 40, speed_fast, -1);
+        drive.setMoveInches(180, 36, speed_fast, -1);
         pool.execute(drive);
-        waitForMoveDone(1);
+        waitForMoveDone(0);
     }
 
     private void _4B() {
@@ -263,7 +262,8 @@ public class autonomous extends LinearOpMode {
     }
 
     private void findSkystone() {
-        while (!isStopRequested() && runtime.seconds() < 7 && !found) {
+        sleep(1000);
+        while (!isStopRequested() && runtime.seconds() < 6 && !found) {
             if (tfod != null) {
                 telemetry.addData("TFmode = ", mode);
                 // getUpdatedRecognitions() will return null if no new information is available since
@@ -280,13 +280,14 @@ public class autonomous extends LinearOpMode {
                             objleft = (int) recognition.getBottom();
                             objcenter = (objleft + objright) / 2;
                             offset = objcenter - 640;
-                            if (Math.abs(offset) < maxOffsetForMiddelBlock) {
-                                blockPos = 0;
-                            } else {
-                                blockPos = Range.clip(offset, -1, 1);
+                            if (objright - objleft < 250) {
+                                if (Math.abs(offset) < maxOffsetForMiddelBlock) {
+                                    blockPos = 0;
+                                } else {
+                                    blockPos = Range.clip(offset, -1, 1);
+                                }
+                                found = true;
                             }
-                            found = true;
-                            break;
                         }
                         telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                         telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
@@ -298,9 +299,8 @@ public class autonomous extends LinearOpMode {
             }
         }
         if (!isStopRequested() && blockPos != 0) {
-            drive.setMoveInches(90 * blockPos, 8 * sidewaysInches, speed_fast, 0);
+            drive.setMoveInches(90 * blockPos, 8.5 * sidewaysInches, speed_fast, -2);
             pool.execute(drive);
-            waitForMoveDone(0);
         }
     }
 
@@ -359,19 +359,19 @@ public class autonomous extends LinearOpMode {
                 H.vertical.setPosition(.5);
             }
         }*/
-        drive.setMoveInches(180, 2, speed_norm, 0);
-        pool.execute(drive);
-        arm.setMoveToDeg(0, armPower);
+        //drive.setMoveInches(180, 2, speed_norm, 0);
+        //pool.execute(drive);
+        arm.setMoveToDeg(2);
         pool.execute(arm);
-        waitForMoveDone(2);
-        drive.setMoveInches(0, 2, speed_norm, 0);
-        pool.execute(drive);
         waitForMoveDone(1);
+        drive.setMoveInches(0, 3.5, speed_norm, 0);
+        pool.execute(drive);
+        sleep(500);
         H.grabber.setPosition(1);
         sleep(750); // wait for servo to move
-        arm.setMoveToDeg(15, armPower);
+        arm.setMoveToDeg(35);
         pool.execute(arm);
-        drive.setMoveInches(0, 6, speed_norm, 0);
+        drive.setMoveInches(0, 7, speed_norm, 0);
         pool.execute(drive);
         waitForMoveDone(2);
     }
@@ -380,16 +380,15 @@ public class autonomous extends LinearOpMode {
 
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
-        waitForMoveDone(1);
+        waitForMoveDone(0);
+        H.grabber.setPosition(0);
         inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + .5;
         drive.setMoveInches(0, inches_to_move, speed_norm, 0);
         pool.execute(drive);
-        arm.setMoveToDeg(45, armPower);
+        arm.setMoveToDeg(50);
         pool.execute(arm);
-        waitForMoveDone(1);
-        H.grab(true);
         waitForMoveDone(0);
-        H.grabber.setPosition(0);
+        H.grab(true);
         sleep(500);
 
     }
@@ -430,7 +429,7 @@ public class autonomous extends LinearOpMode {
 
             case 2:
 
-                while (!isStopRequested() && !drive.moveDone && !arm.moveDone) {
+                while (!isStopRequested() && (!drive.moveDone || !arm.moveDone)) {
 
                     idle();
 

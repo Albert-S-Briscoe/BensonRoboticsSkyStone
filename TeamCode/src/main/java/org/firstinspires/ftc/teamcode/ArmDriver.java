@@ -54,7 +54,7 @@ public class ArmDriver implements Runnable {
     public boolean moveDone = false;
     private boolean isToDeg;
 
-    private final double zeroVolts = 0.38;
+    private final double zeroVolts = 0.34;
     private final double degreesPerVolt = 111;
     private double maxArmPower = 0.3;
     private double armTargetAngle;
@@ -100,10 +100,9 @@ public class ArmDriver implements Runnable {
         moveDone = true;
     }
 
-    void setMoveToDeg(double MoveToAngle, double maxArmPower) {
+    void setMoveToDeg(double MoveToAngle) {
 
         this.armTargetAngle = Range.clip(MoveToAngle, 0, 135);
-        this.maxArmPower = maxArmPower;
 
         isToDeg = true;
         moveDone = false;

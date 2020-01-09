@@ -35,11 +35,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 @TeleOp(name="TeleOp Lite", group="Linear Opmode")
 public class TeleOpLite extends LinearOpMode {
 
@@ -366,7 +361,7 @@ public class TeleOpLite extends LinearOpMode {
 
     }
 
-    void MoveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
+    private void MoveInches(/*int Angle_Degrees, double inches, double speed, double agl_frwd*/) {
 
         /**Angle_Degrees, the angle relative to the robot that it should move
          * inches, the number of inches to move. Is not accurate when going sideways due to the mecanum wheels
@@ -443,7 +438,7 @@ public class TeleOpLite extends LinearOpMode {
 
     }
 
-    void changeTargetInches(double inches) {
+    private void changeTargetInches(double inches) {
 
         double Angle = Math.toRadians(Angle_Degrees + 45);// - Math.PI / 4;
         double cosAngle = Math.cos(Angle);

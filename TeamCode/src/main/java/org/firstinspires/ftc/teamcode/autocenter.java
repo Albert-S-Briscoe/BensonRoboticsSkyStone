@@ -76,7 +76,7 @@ public class autocenter extends LinearOpMode {
     private boolean found = false;
 
     //final double speed_slow = .35;
-    final double speed_norm = .35;
+    final double speed_norm = .65;
     final double speed_fast = 1;
     final int field_side = 1;// -1 = red, 1 = blue
 
@@ -167,13 +167,14 @@ public class autocenter extends LinearOpMode {
                             objleft = (int) recognition.getBottom();
                             objcenter = (objleft + objright) / 2;
                             offset = objcenter - 640;
-                            if (Math.abs(offset) < maxOffsetForMiddelBlock) {
-                                blockPos = 0;
-                            } else {
-                                blockPos = Range.clip(offset, -1, 1);
+                            if (objright - objleft < 500) {
+                                if (Math.abs(offset) < maxOffsetForMiddelBlock) {
+                                    blockPos = 0;
+                                } else {
+                                    blockPos = Range.clip(offset, -1, 1);
+                                }
+                                found = true;
                             }
-                            found = true;
-                            break;
                         }
                         telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
                         telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
