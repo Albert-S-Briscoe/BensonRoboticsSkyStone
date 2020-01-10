@@ -447,6 +447,7 @@ public class MecanumWheelDriver implements Runnable {
 
         isMove = false;
         moveDone = false;
+        stop = false;
 
     }
 
@@ -495,7 +496,7 @@ public class MecanumWheelDriver implements Runnable {
             H.leftback.   setPower(-speed * drect);
             H.rightback.  setPower(speed * drect);
 
-        } while (Math.abs(offset) > turnAccrate);
+        } while (Math.abs(offset) > turnAccrate && !stop);
 
         H.leftfront.  setPower(0);
         H.rightfront. setPower(0);

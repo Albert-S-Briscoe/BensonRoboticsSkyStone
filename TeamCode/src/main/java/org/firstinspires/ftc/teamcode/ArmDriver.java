@@ -52,6 +52,7 @@ import com.qualcomm.robotcore.util.Range;
 public class ArmDriver implements Runnable {
 
     public boolean moveDone = false;
+    public boolean stop = false;
     private boolean isToDeg;
 
     private final double zeroVolts = 0.34;
@@ -106,6 +107,7 @@ public class ArmDriver implements Runnable {
 
         isToDeg = true;
         moveDone = false;
+        stop = false;
 
     }
 
@@ -126,7 +128,7 @@ public class ArmDriver implements Runnable {
 
              }
 
-        } while (armOffAngle > 2.5);
+        } while (armOffAngle > 2.5 && !stop);
 
         H.vertical.setPosition(0.5);
 
@@ -139,6 +141,8 @@ public class ArmDriver implements Runnable {
 
         isToDeg = false;
         moveDone = false;
+        stop = false;
+
     }
 
     private void MoveToHeight() {
@@ -162,7 +166,7 @@ public class ArmDriver implements Runnable {
 
             }
 
-        } while (Math.abs(inches - armPos) > 0.075);
+        } while (Math.abs(inches - armPos) > 0.075 && !stop);
 
     }
 

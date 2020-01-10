@@ -140,6 +140,7 @@ public class autonomous extends LinearOpMode {
 
         drive.setrotate(0,0, false);
         drive.setMoveInches(0, 0, 0, 0);
+        arm.stop = true;
         pool.shutdownNow();
         drive.stop();
         drive.H.vertical.setPosition(0.5);
@@ -159,6 +160,12 @@ public class autonomous extends LinearOpMode {
 
         while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 650) {
                 drive.move(0, speed_norm, 0);
+            if (runtime.seconds() > 4.5) {
+                drive.stop();
+                while (!isStopRequested()) {
+                    idle();
+                }
+            }
         }
 
         drive.stop();
@@ -177,10 +184,10 @@ public class autonomous extends LinearOpMode {
 
         arm.setMoveToDeg(20);
         pool.execute(arm);
-        waitForMoveDone(1);
 
         drive.setMoveInches(0, 60, speed_fast, 90 * field_side);
         pool.execute(drive);
+        waitForMoveDone(1);
         sleep(1500);
         arm.setMoveToDeg(35);
         pool.execute(arm);
@@ -190,7 +197,7 @@ public class autonomous extends LinearOpMode {
 
 
         while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.INCH) > 26) {
-            drive.moveWithGyro(0, speed_fast * Range.clip((H.upperRange.getDistance(DistanceUnit.INCH) - 26) / 10, 0.25, 1 ), 90 * field_side);
+            drive.moveWithGyro(0, speed_fast * Range.clip((H.upperRange.getDistance(DistanceUnit.INCH) - 26) / 15, 0.25, 1 ), 90 * field_side);
         }
 
         drive.stop();
@@ -212,10 +219,13 @@ public class autonomous extends LinearOpMode {
         drive.setrotate(90 * field_side, speed_fast, false);
         pool.execute(drive);
         waitForMoveDone(0);
-        drive.setMoveInches(0, 15, speed_fast, 90 * field_side);
+        drive.setMoveInches(0, 11, speed_fast, 90 * field_side);
         pool.execute(drive);
         drive.setRampDown(0, 0);
+        sleep(1000);
+        drive.stop = true;
         waitForMoveDone(0);
+
         /*drive.move(0, speed_fast, 0);
         sleep(500);
         drive.stop();*/
@@ -229,16 +239,18 @@ public class autonomous extends LinearOpMode {
 
     private void _4A() {
         drive.move(90 * field_side, speed_fast, 0);
-        sleep(100);
+        sleep(300);
         drive.stop();
         drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
+        arm.setMoveToDeg(20);
+        pool.execute(arm);
         //drive.move(90 * field_side, speed_norm, 0);
         //sleep(600);
-        drive.setMoveInches(180, 35, speed_fast, -1);
+        drive.setMoveInches(180, 40, speed_fast, -1);
         pool.execute(drive);
-        waitForMoveDone(0);
+        waitForMoveDone(2);
     }
 
     private void _4B() {
@@ -283,11 +295,11 @@ public class autonomous extends LinearOpMode {
                     int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
-                            objright = (int) recognition.getTop();
-                            objleft = (int) recognition.getBottom();
+                            objleft = (int) recognition.getTop();
+                            objright = (int) recognition.getBottom();
                             objcenter = (objleft + objright) / 2;
                             offset = objcenter - 640;
-                            if (objright - objleft < 250) {
+                            if (objleft - objright < 250) {
                                 if (Math.abs(offset) < maxOffsetForMiddelBlock) {
                                     blockPos = 0;
                                 } else {
@@ -306,7 +318,7 @@ public class autonomous extends LinearOpMode {
             }
         }
         if (!isStopRequested() && blockPos != 0) {
-            drive.setMoveInches(90 * blockPos, 8.5 * sidewaysInches, speed_fast, -2);
+            drive.setMoveInches(-90 * blockPos, 8.5 * sidewaysInches, speed_fast, -2);
             pool.execute(drive);
         }
     }
@@ -353,7 +365,7 @@ public class autonomous extends LinearOpMode {
     }*/
 
     private void pickUpSkystone() {
-        H.grabber.setPosition(0);
+        H.grabber.setPosition(1);
         /*while (!isStopRequested() && (H.upperRange.getDistance(DistanceUnit.MM) < 420 || H.vertpos.getVoltage() > .4)) {
             if (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) < 420) {
                 drive.move(180, speed_norm, 0);
@@ -369,7 +381,7 @@ public class autonomous extends LinearOpMode {
         //drive.setMoveInches(180, 2, speed_norm, 0);
         //pool.execute(drive);
         if (!drive.moveDone) {
-            sleep(1500);
+            sleep(1250);
         }
         drive.stop = true;
         waitForMoveDone(0);
@@ -378,17 +390,17 @@ public class autonomous extends LinearOpMode {
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-        drive.setMoveInches(0, 5.5, speed_norm, 0);
+        drive.setMoveInches(0, 7.5, speed_norm, 0);
         pool.execute(drive);
         waitForMoveDone(2);
         arm.setMoveToDeg(2);
         pool.execute(arm);
-        H.grabber.setPosition(1);
-        sleep(750); // wait for servo to move
         waitForMoveDone(1);
+        H.grabber.setPosition(0);
+        sleep(750); // wait for servo to move
         arm.setMoveToDeg(35);
         pool.execute(arm);
-        drive.setMoveInches(0, 7, speed_norm, 0);
+        drive.setMoveInches(0, 6, speed_norm, 0);
         pool.execute(drive);
         waitForMoveDone(2);
     }
@@ -403,7 +415,7 @@ public class autonomous extends LinearOpMode {
         pool.execute(drive);
         arm.setMoveToDeg(50);
         pool.execute(arm);
-        H.grabber.setPosition(0);
+        H.grabber.setPosition(1);
         waitForMoveDone(0);
         H.grab(true);
         sleep(500);
