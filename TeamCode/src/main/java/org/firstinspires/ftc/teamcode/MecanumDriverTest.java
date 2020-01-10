@@ -91,7 +91,7 @@ public class MecanumDriverTest extends LinearOpMode {
                 drive.setMoveInches(0, 20, 0.65, 0);
                 pool.execute(drive);
                 sleep(500);
-                drive.changeTargetInches(40);
+                drive.changeTargetInches(40, true);
                 isybutton = true;
             } else if (gamepad1.x && !isxbutton) {
                 drive.setMoveInches(90, 25 * sidewaysInches, .65, 0);
