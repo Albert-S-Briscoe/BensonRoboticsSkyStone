@@ -4,6 +4,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -31,7 +32,7 @@ public class RobotHardware {
     public DcMotor        rightfront;
     public DcMotor        leftback;
     public DcMotor        rightback;
-    public Servo        vertical;
+    public DcMotor        vertical;
     public Servo          grabber;
     //public Servo          vertical;
     public Servo          L;
@@ -47,7 +48,7 @@ public class RobotHardware {
         rightback   = HM.get(DcMotor.class, "RB_drive");
 
         grabber     = HM.get(Servo.class, "grabber");
-        vertical    = HM.get(Servo.class, "vertical");
+        vertical    = HM.get(DcMotor.class, "vertical");
         L           = HM.get(Servo.class, "GrabberLeft");
         R           = HM.get(Servo.class, "GrabberRight");
 
@@ -66,8 +67,8 @@ public class RobotHardware {
         Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor) upperRange;
         Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) lowerRange;
 
-        leftfront.setDirection(DcMotor.Direction.FORWARD);
-        rightfront.setDirection(DcMotor.Direction.REVERSE);
+        leftfront.setDirection(DcMotor.Direction.REVERSE);
+        rightfront.setDirection(DcMotor.Direction.FORWARD);
         leftback.setDirection(DcMotor.Direction.FORWARD);
         rightback.setDirection(DcMotor.Direction.REVERSE);
 
@@ -75,6 +76,9 @@ public class RobotHardware {
         rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        vertical.setDirection(DcMotor.Direction.FORWARD);
 
     }
 

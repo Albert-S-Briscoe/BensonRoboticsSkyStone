@@ -64,6 +64,14 @@ public class TeleOpLite extends LinearOpMode {
     int leftbackStartPos;
     int rightbackStartPos;
 
+    double rotateSpeed;
+    double offset;
+    double heading;
+    double Target;
+    double rightRadius;
+    byte drect;
+    final private double rampDownAngl = 50;
+
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
@@ -113,6 +121,8 @@ public class TeleOpLite extends LinearOpMode {
         boolean compensatebutton = false;
         boolean useArmCompensate = true;
         boolean grabberPosButton = false;
+        boolean usePOV = true;
+        boolean POVButton = false;
         double  position = 0;
 
         double agl_frwd = 180;
@@ -128,22 +138,35 @@ public class TeleOpLite extends LinearOpMode {
             y = -gamepad1.left_stick_y;
             x = gamepad1.left_stick_x;
 
-            if (Math.abs(gamepad1.right_stick_x) > 0.05) {
+            if (usePOV) {
 
-                if (gamepad1.right_stick_x > 0) {
+                rightRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
 
-                    Rotate = -((Math.log10((-Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
-
+                if (rightRadius > 0.2) {
+                    Target = addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
+                    Rotate = POVRotate();
                 } else {
-
-                    Rotate = -(-((Math.log10((Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1);
-
+                    Rotate = 0;
                 }
 
             } else {
+                if (Math.abs(gamepad1.right_stick_x) > 0.05) {
 
-                Rotate = 0;
+                    if (gamepad1.right_stick_x > 0) {
 
+                        Rotate = -((Math.log10((-Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
+
+                    } else {
+
+                        Rotate = -(-((Math.log10((Range.clip(gamepad1.right_stick_x, -1, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1);
+
+                    }
+
+                } else {
+
+                    Rotate = 0;
+
+                }
             }
 
             if (Math.hypot(x, y) > 0.05) {
@@ -270,6 +293,21 @@ public class TeleOpLite extends LinearOpMode {
             } else {
 
                 compensatebutton = false;
+
+            }
+
+            if (gamepad1.x) {
+
+                if (!POVButton) {
+
+                    usePOV = !usePOV;
+                    POVButton = true;
+
+                }
+
+            } else {
+
+                POVButton = false;
 
             }
 
@@ -465,6 +503,59 @@ public class TeleOpLite extends LinearOpMode {
         H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
         H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
 
+    }
+
+    private double POVRotate() {
+
+        heading = H.getheading();
+        offset = -FindDegOffset(heading, Target);
+        rotateSpeed = Range.clip( Math.abs(offset / rampDownAngl), 0.19, rightRadius);
+        drect = (byte)Range.clip(offset * 100, -1, 1);
+
+        if (Math.abs(offset) > 5) {
+            return rotateSpeed * drect;
+        } else {
+            return 0;
+        }
+
+    }
+
+    private double FindDegOffset(double DegCurrent, double TargetDeg) {
+
+        /**DegCurrent, the current degree of the robot value between 0 and 360
+         * TargetDeg, the degree with which to find the offset
+         * Finds the angle between current degree and the target degree
+         * returns a value between -180 and 180
+         * output will be negative if the current degree is left of the target, positive if on the right
+         *    0
+         * 90   -90
+         *   180
+         */
+
+        double offset = TargetDeg - DegCurrent;
+        if (offset > 180) {
+            offset -= 360;
+        } else if (offset < -180) {
+            offset += 360;
+        }
+        return offset;
+    }
+
+    private double addDegree(double DegCurrent, double addDeg) {
+
+        /**adds a number of degrees to the current degree with rapping around from 360 to 0
+         * returns a value between 0 and 360
+         */
+
+        double output = DegCurrent + addDeg;
+        while (output < 0 || output > 360) {
+            if (output >= 360) {
+                output -= 360;
+            } else if (output < 0) {
+                output += 360;
+            }
+        }
+        return output;
     }
 
 }

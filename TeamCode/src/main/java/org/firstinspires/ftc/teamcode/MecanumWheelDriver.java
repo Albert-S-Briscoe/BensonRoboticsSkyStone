@@ -87,13 +87,6 @@ public class MecanumWheelDriver implements Runnable {
     private int rampDownAngl = 50;
     boolean selfcorrect = true;
 
-    private final double zeroVolts = 0.38;
-    private final double degreesPerVolt = 111;
-    private double maxArmPower = 0.3;
-    private double armTargetAngle;
-    private double armAngle;
-    private double armOffAngle;
-
     int LF_RBtarget;
     int RF_LBtarget;
 
@@ -102,16 +95,12 @@ public class MecanumWheelDriver implements Runnable {
     int leftbackStartPos;
     int rightbackStartPos;
 
-    HardwareMap HM;
+    RobotHardware H;
 
-    RobotHardware H = new RobotHardware();
+    MecanumWheelDriver(RobotHardware H) {
 
-    void init(HardwareMap HM) {
+        this.H = H;
 
-        /**initializes RobotHardware
-         * requires hardwaremap as input
-         */
-        H.init(HM);
     }
 
     public void run() {
@@ -416,6 +405,7 @@ public class MecanumWheelDriver implements Runnable {
                 H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
                 H.leftback.setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
                 H.rightback.setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+
             } else {
 
                 H.leftfront.setPower(LF_RB * speed);

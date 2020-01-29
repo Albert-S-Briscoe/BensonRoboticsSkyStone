@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
@@ -51,19 +52,24 @@ import com.qualcomm.robotcore.util.Range;
 
 public class ArmDriver implements Runnable {
 
+    private final double COUNTS_PER_REVOLUTION = 288;
+    private final double LITTLE_WHEEL_DIAMETER_INCHES = 4.0;
+    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (LITTLE_WHEEL_DIAMETER_INCHES * 3.14159);
+    private final double maxHieght = 15;
+    private final double power = 0.5;
+
     public boolean moveDone = false;
     public boolean stop = false;
-    private boolean isToDeg;
+    private int target;
+    private double inches = 0;
 
-    private final double zeroVolts = 0.34;
-    private final double degreesPerVolt = 111;
-    private double maxArmPower = 0.3;
-    private double armTargetAngle;
-    private double armAngle;
-    private double armOffAngle;
-    private double inches;
+    RobotHardware H;
 
-    RobotHardware H = new RobotHardware();
+    ArmDriver(RobotHardware H) {
+
+        this.H = H;
+
+    }
 
     void init(HardwareMap HM) {
 
@@ -88,20 +94,24 @@ public class ArmDriver implements Runnable {
          *
          */
 
-        if (isToDeg) {
+        double inches = 0;
 
-            MoveToDeg();
+        while (!stop) {
 
-        } else {
+            if (inches != this.inches) {
 
-            MoveToHeight();
+                target = (int)(this.inches * COUNTS_PER_INCH);
+                H.vertical.setTargetPosition(target);
+
+            }
+
+            moveDone = !H.vertical.isBusy();
+            inches = this.inches;
 
         }
-
-        moveDone = true;
     }
 
-    void setMoveToDeg(double MoveToAngle) {
+    /*void setMoveToDeg(double MoveToAngle) {
 
         this.armTargetAngle = Range.clip(MoveToAngle, 0, 135);
 
@@ -132,41 +142,46 @@ public class ArmDriver implements Runnable {
 
         H.vertical.setPosition(0.5);
 
-    }
+    }*/
 
-    public void setMoveToHeight(double inches, double maxArmPower) {
+    public void moveToInch(double inches) {
 
-        this.maxArmPower = maxArmPower;
-        this.inches = Range.clip(inches, 0, 11.74);
-
-        isToDeg = false;
+        this.inches = Range.clip(inches, 0, maxHieght);
         moveDone = false;
         stop = false;
 
     }
 
-    private void MoveToHeight() {
+    private void moveToBlock(byte blocknum) {
 
-        final double armLength = 11.75;
-        double armPos;
+        inches = Range.clip(((blocknum - 1) * 4) + 2.5, 0, maxHieght);
+        moveDone = false;
+        stop = false;
 
-        do {
+    }
 
-            armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
-            armPos = Math.sin(Math.toRadians(armAngle)) * armLength;
-            armOffAngle = Math.abs(armAngle - Math.toDegrees(Math.asin(inches / armLength)));
+    void zero() {
 
-            if (armPos > inches) {
+        H.vertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        H.vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
+    }
 
-            } else {
+    void stop() {
 
-                H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
+        stop = true;
 
-            }
+    }
 
-        } while (Math.abs(inches - armPos) > 0.075 && !stop);
+    void pause() {
+
+        H.vertical.setPower(0);
+
+    }
+
+    void play() {
+
+        H.vertical.setPower(power);
 
     }
 
