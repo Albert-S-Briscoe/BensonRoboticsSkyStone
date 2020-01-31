@@ -46,8 +46,8 @@ import java.util.concurrent.Executors;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
-@Autonomous(name="Autonomous Blue", group="Linear Opmode")
-public class autonomous extends LinearOpMode {
+@Autonomous(name="Autonomous Red", group="Linear Opmode")
+public class autonomousRed extends LinearOpMode {
 
     private static final String VUFORIA_KEY = "AXfJetz/////AAABmfTftTQRKUq2u+iCzbuFm2wKhp5/qubTF+6xF9VBwMBiVi2lCwJbNrIAVofnUKke4/MjFtZROHGeelAgbQx6MjYX+qdX4vRB5z2PboepftoqvoZy3irQKQ2aKqNSbpN72hI/tI2wluN0xqC6KThtMURH0EuvUf8VcGDfmuXiA/uP00/2dsYhIMhxBJCmBq0AG5jMWi8MnHJDZwnoYLdcliKB7rvNTUDbf1fzxRzf9QHgB2u+invzPou7q8ncAsD5GdXFfA/CiYmR65JKXDOE0wHoc8FxvrzUIRCQ2geSypo7eY5q/STJvqPmjoj33CQFHl0hKMx05QwwsABdlIZvfLLbjA3VH2HO4dcv+OOoElws";
     private static final String TFOD_MODEL_ASSET = "Skystone.tflite";
@@ -77,7 +77,7 @@ public class autonomous extends LinearOpMode {
     final double speed_norm = .6;
     final double speed_fast = 1;
     final double armPower = 0.3;
-    final byte field_side = 1;   // -1 = red, 1 = blue
+    final byte field_side = -1;   // -1 = red, 1 = blue
     final int maxOffsetForMiddelBlock = 175;
 
     private boolean found = false;
@@ -237,7 +237,7 @@ public class autonomous extends LinearOpMode {
     }
 
     private void _4A() {
-        drive.move(-90, speed_fast, 0);
+        drive.move(90 * field_side, speed_fast, 0);
         sleep(300);
         drive.stop();
         drive.setrotate(90 * field_side, speed_fast, true);

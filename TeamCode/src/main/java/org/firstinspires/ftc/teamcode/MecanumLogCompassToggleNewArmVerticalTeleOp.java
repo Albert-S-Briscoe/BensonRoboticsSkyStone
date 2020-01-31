@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -38,7 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+@Disabled
 @TeleOp(name="TeleOp", group="Linear Opmode")
 public class MecanumLogCompassToggleNewArmVerticalTeleOp extends LinearOpMode {
 
@@ -58,8 +59,7 @@ public class MecanumLogCompassToggleNewArmVerticalTeleOp extends LinearOpMode {
         ////////////////////////////// Init //////////////////////////////
 
         ElapsedTime         runtime = new ElapsedTime();
-        MecanumWheelDriver drive = new MecanumWheelDriver();
-        drive.init(hardwareMap);
+        MecanumWheelDriver drive = new MecanumWheelDriver(H);
         ExecutorService pool = Executors.newFixedThreadPool(1);
         H.init(hardwareMap);
 
@@ -221,24 +221,24 @@ public class MecanumLogCompassToggleNewArmVerticalTeleOp extends LinearOpMode {
 
                     if (armPos > armMove) {
 
-                        H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
+                        H.Vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
                     } else {
 
-                        H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
+                        H.Vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
                     }
 
                 } else {
 
-                    H.vertical.setPosition(0.5);
+                    H.Vertical.setPosition(0.5);
 
                 }
 
             } else {
 
                 //H.vertical.setPower(Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle));
-                H.vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle)) / 2 + 0.5);
+                H.Vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle)) / 2 + 0.5);
 
             }
 

@@ -570,7 +570,27 @@ public class MecanumWheelDriver implements Runnable {
         }
     }
 
-    private double addDegree(double DegCurrent, double addDeg) {
+    double POVRotate(double Target, double speed) {
+
+        double rotateSpeed;
+        double offset;
+        double heading;
+        byte drect;
+
+        heading = H.getheading();
+        offset = -FindDegOffset(heading, Target);
+        rotateSpeed = Range.clip( Math.abs(offset / rampDownAngl), 0.19, speed);
+        drect = (byte)Range.clip(offset * 100, -1, 1);
+
+        if (Math.abs(offset) > 5) {
+            return rotateSpeed * drect;
+        } else {
+            return 0;
+        }
+
+    }
+
+    double addDegree(double DegCurrent, double addDeg) {
 
         /**adds a number of degrees to the current degree with rapping around from 360 to 0
          * returns a value between 0 and 360
@@ -587,7 +607,7 @@ public class MecanumWheelDriver implements Runnable {
         return output;
     }
 
-    private double FindDegOffset(double DegCurrent, double TargetDeg) {
+    double FindDegOffset(double DegCurrent, double TargetDeg) {
 
         /**DegCurrent, the current degree of the robot value between 0 and 360
          * TargetDeg, the degree with which to find the offset

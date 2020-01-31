@@ -35,23 +35,25 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @TeleOp(name="TeleOp Lite", group="Linear Opmode")
 public class TeleOpLinearArm extends LinearOpMode {
 
-    RobotHardware H = new RobotHardware();
+
 
     boolean first = true;
 
     double LF_RB = 0;  //leftfront and rightback motors
     double RF_LB = 0;  //rightfront and leftback motors
 
-    double rotateSpeed;
-    double offset;
-    double heading;
+
     double Target;
-    double rightRadius;
-    byte drect;
-    final private double rampDownAngl = 50;
+    double rotateRadius;
+    private final double rampDownAngl = 50;
+    private final byte maxblocks = 3;
+    private final double repeatDelay = 0.75;
 
     @Override
     public void runOpMode() {
@@ -59,7 +61,11 @@ public class TeleOpLinearArm extends LinearOpMode {
         telemetry.update();
         ////////////////////////////// Init //////////////////////////////
 
-        ElapsedTime         runtime = new ElapsedTime();
+        RobotHardware H = new RobotHardware();
+        MecanumWheelDriver drive = new MecanumWheelDriver(H);
+        ElapsedTime runtime = new ElapsedTime();
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        LinearArmDriver arm = new LinearArmDriver(H);
         H.init(hardwareMap);
 
         ////////////////////////////// Init Variables //////////////////////////////
@@ -91,6 +97,13 @@ public class TeleOpLinearArm extends LinearOpMode {
         boolean grabberPosButton = false;
         boolean usePOV = true;
         boolean POVButton = false;
+
+        boolean upButton = false;
+        boolean downButton = false;
+        int blockpos = 0;
+        double upstartTime = 0;
+        double downstartTime = 0;
+
         double  position = 0;
 
         double agl_frwd = 180;
@@ -98,6 +111,8 @@ public class TeleOpLinearArm extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        arm.zero();
+        pool.execute(arm);
 
         while (opModeIsActive()) {
 
@@ -108,11 +123,11 @@ public class TeleOpLinearArm extends LinearOpMode {
 
             if (usePOV) {
 
-                rightRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
+                rotateRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
 
-                if (rightRadius > 0.2) {
-                    Target = addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
-                    Rotate = POVRotate();
+                if (rotateRadius > 0.2) {
+                    Target = drive.addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
+                    Rotate = drive.POVRotate(Target, rotateRadius);
                 } else {
                     Rotate = 0;
                 }
@@ -213,7 +228,39 @@ public class TeleOpLinearArm extends LinearOpMode {
 
             ////////////////////////////// Move Arm //////////////////////////////
 
+            if (gamepad1.right_trigger - gamepad1.left_trigger > 0.25) {
 
+                if (!upButton || runtime.seconds() > upstartTime + repeatDelay) {
+
+                    upstartTime = runtime.seconds();
+                    blockpos = Range.clip(blockpos - 1, 0, maxblocks);
+                    upButton = true;
+
+                }
+
+            } else {
+
+                upButton = false;
+
+            }
+
+            if (gamepad1.left_trigger - gamepad1.right_trigger > 0.25) {
+
+                if (!downButton || runtime.seconds() > downstartTime + repeatDelay) {
+
+                    downstartTime = runtime.seconds();
+                    blockpos = Range.clip(blockpos + 1, 0, maxblocks);
+                    downButton = true;
+
+                }
+
+            } else {
+
+                downButton = false;
+
+            }
+
+            arm.moveToBlock(blockpos);
 
             ////////////////////////////// Buttons //////////////////////////////
 
@@ -316,59 +363,6 @@ public class TeleOpLinearArm extends LinearOpMode {
 
         }
 
-    }
-
-    private double POVRotate() {
-
-        heading = H.getheading();
-        offset = -FindDegOffset(heading, Target);
-        rotateSpeed = Range.clip( Math.abs(offset / rampDownAngl), 0.19, rightRadius);
-        drect = (byte)Range.clip(offset * 100, -1, 1);
-
-        if (Math.abs(offset) > 5) {
-            return rotateSpeed * drect;
-        } else {
-            return 0;
-        }
-
-    }
-
-    private double FindDegOffset(double DegCurrent, double TargetDeg) {
-
-        /**DegCurrent, the current degree of the robot value between 0 and 360
-         * TargetDeg, the degree with which to find the offset
-         * Finds the angle between current degree and the target degree
-         * returns a value between -180 and 180
-         * output will be negative if the current degree is left of the target, positive if on the right
-         *    0
-         * 90   -90
-         *   180
-         */
-
-        double offset = TargetDeg - DegCurrent;
-        if (offset > 180) {
-            offset -= 360;
-        } else if (offset < -180) {
-            offset += 360;
-        }
-        return offset;
-    }
-
-    private double addDegree(double DegCurrent, double addDeg) {
-
-        /**adds a number of degrees to the current degree with rapping around from 360 to 0
-         * returns a value between 0 and 360
-         */
-
-        double output = DegCurrent + addDeg;
-        while (output < 0 || output > 360) {
-            if (output >= 360) {
-                output -= 360;
-            } else if (output < 0) {
-                output += 360;
-            }
-        }
-        return output;
     }
 
 }

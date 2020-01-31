@@ -68,7 +68,7 @@ public class TeleOpLite extends LinearOpMode {
     double offset;
     double heading;
     double Target;
-    double rightRadius;
+    double rotateRadius;
     byte drect;
     final private double rampDownAngl = 50;
 
@@ -78,7 +78,8 @@ public class TeleOpLite extends LinearOpMode {
         telemetry.update();
         ////////////////////////////// Init //////////////////////////////
 
-        ElapsedTime         runtime = new ElapsedTime();
+        ElapsedTime runtime = new ElapsedTime();
+        MecanumWheelDriver drive = new MecanumWheelDriver(H);
         H.init(hardwareMap);
 
         ////////////////////////////// Init Variables //////////////////////////////
@@ -140,11 +141,11 @@ public class TeleOpLite extends LinearOpMode {
 
             if (usePOV) {
 
-                rightRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
+                rotateRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
 
-                if (rightRadius > 0.2) {
-                    Target = addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
-                    Rotate = POVRotate();
+                if (rotateRadius > 0.2) {
+                    Target = drive.addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
+                    Rotate = drive.POVRotate(Target, rotateRadius);
                 } else {
                     Rotate = 0;
                 }
@@ -275,7 +276,7 @@ public class TeleOpLite extends LinearOpMode {
 
             ////////////////////////////// Move Arm //////////////////////////////
 
-                H.vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (maxDeg - armAngle) / rampDownAngle)) / 2 + 0.5);
+                H.Vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (maxDeg - armAngle) / rampDownAngle)) / 2 + 0.5);
 
             ////////////////////////////// Buttons //////////////////////////////
 
@@ -503,59 +504,6 @@ public class TeleOpLite extends LinearOpMode {
         H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
         H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
 
-    }
-
-    private double POVRotate() {
-
-        heading = H.getheading();
-        offset = -FindDegOffset(heading, Target);
-        rotateSpeed = Range.clip( Math.abs(offset / rampDownAngl), 0.19, rightRadius);
-        drect = (byte)Range.clip(offset * 100, -1, 1);
-
-        if (Math.abs(offset) > 5) {
-            return rotateSpeed * drect;
-        } else {
-            return 0;
-        }
-
-    }
-
-    private double FindDegOffset(double DegCurrent, double TargetDeg) {
-
-        /**DegCurrent, the current degree of the robot value between 0 and 360
-         * TargetDeg, the degree with which to find the offset
-         * Finds the angle between current degree and the target degree
-         * returns a value between -180 and 180
-         * output will be negative if the current degree is left of the target, positive if on the right
-         *    0
-         * 90   -90
-         *   180
-         */
-
-        double offset = TargetDeg - DegCurrent;
-        if (offset > 180) {
-            offset -= 360;
-        } else if (offset < -180) {
-            offset += 360;
-        }
-        return offset;
-    }
-
-    private double addDegree(double DegCurrent, double addDeg) {
-
-        /**adds a number of degrees to the current degree with rapping around from 360 to 0
-         * returns a value between 0 and 360
-         */
-
-        double output = DegCurrent + addDeg;
-        while (output < 0 || output > 360) {
-            if (output >= 360) {
-                output -= 360;
-            } else if (output < 0) {
-                output += 360;
-            }
-        }
-        return output;
     }
 
 }

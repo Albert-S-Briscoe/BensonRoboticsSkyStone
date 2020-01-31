@@ -96,9 +96,8 @@ public class autocenter extends LinearOpMode {
             tfod.activate();
         }
 
-        MecanumWheelDriver drive = new MecanumWheelDriver();
-        drive.init(hardwareMap);
         RobotHardware H = new RobotHardware();
+        MecanumWheelDriver drive = new MecanumWheelDriver(H);
         H.init(hardwareMap);
         ExecutorService pool = Executors.newFixedThreadPool(1);
 

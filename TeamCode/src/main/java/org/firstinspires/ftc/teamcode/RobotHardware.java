@@ -16,6 +16,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class RobotHardware {
+    /**
+     *  to use RobotHardware use this:
+     *
+     *      RobotHardware H = new RobotHardware();
+     *
+     *  then run this in runOpMode()
+     *
+     *      H.init(hardwareMap)
+     *
+     *  if you want to read a sensor value or change motor speed use this:
+     *
+     *      H.[sensor/motor name].[function name]([var 1], [var 2] ...);
+     */
 
     ////////////////////////////// Sensors //////////////////////////////
 
@@ -34,7 +47,7 @@ public class RobotHardware {
     public DcMotor        rightback;
     public DcMotor        vertical;
     public Servo          grabber;
-    //public Servo          vertical;
+    public Servo          Vertical;
     public Servo          L;
     public Servo          R;
 

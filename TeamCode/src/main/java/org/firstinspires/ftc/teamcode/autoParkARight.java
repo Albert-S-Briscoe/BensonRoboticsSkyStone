@@ -62,10 +62,12 @@ public class autoParkARight extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        MecanumWheelDriver drive = new MecanumWheelDriver();
-        drive.init(hardwareMap);
+        RobotHardware H = new RobotHardware();
+        MecanumWheelDriver drive = new MecanumWheelDriver(H);
         ExecutorService pool = Executors.newFixedThreadPool(1);
         drive.RunWithEncoders(true);
+
+        H.init(hardwareMap);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();

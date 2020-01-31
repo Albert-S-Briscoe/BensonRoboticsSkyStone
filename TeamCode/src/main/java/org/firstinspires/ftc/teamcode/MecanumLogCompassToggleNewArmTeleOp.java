@@ -36,7 +36,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-//@Disabled
+@Disabled
 @TeleOp(name="TeleOp Compass Toggle new arm", group="Linear Opmode")
 public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
 
@@ -164,12 +164,12 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
                     armOffAngle = Math.abs(armAngle - Math.toDegrees(Math.asin(armMove / armLength)));
 
                     if (armPos > armMove) {
-                        H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
+                        H.Vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
                     } else {
-                        H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
+                        H.Vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
                     }
                 } else {
-                    H.vertical.setPosition(0.5);
+                    H.Vertical.setPosition(0.5);
                 }
             } else {/*
                 if (H.vertpos.getVoltage() > 1.6) {
@@ -179,8 +179,8 @@ public class MecanumLogCompassToggleNewArmTeleOp extends LinearOpMode {
                 } else {
                     V_pos = (gamepad1.left_trigger - gamepad1.right_trigger + 1) / 2;
                 }
-                H.vertical.setPosition(V_pos);*/
-                H.vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle)) / 2 + 0.5);
+                H.Vertical.setPosition(V_pos);*/
+                H.Vertical.setPosition((Range.clip(gamepad1.left_trigger, 0, armAngle / rampDownAngle) - Range.clip(gamepad1.right_trigger, 0, (135 - armAngle) / rampDownAngle)) / 2 + 0.5);
 
             }
 

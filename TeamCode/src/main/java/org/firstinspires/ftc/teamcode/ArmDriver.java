@@ -29,8 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
 /**     put the following code inside runOpMode()
@@ -52,16 +50,17 @@ import com.qualcomm.robotcore.util.Range;
 
 public class ArmDriver implements Runnable {
 
-    private final double COUNTS_PER_REVOLUTION = 288;
-    private final double LITTLE_WHEEL_DIAMETER_INCHES = 4.0;
-    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (LITTLE_WHEEL_DIAMETER_INCHES * 3.14159);
-    private final double maxHieght = 15;
-    private final double power = 0.5;
-
     public boolean moveDone = false;
     public boolean stop = false;
-    private int target;
-    private double inches = 0;
+    private boolean isToDeg;
+
+    private final double zeroVolts = 0.34;
+    private final double degreesPerVolt = 111;
+    private double maxArmPower = 0.3;
+    private double armTargetAngle;
+    private double armAngle;
+    private double armOffAngle;
+    private double inches;
 
     RobotHardware H;
 
@@ -69,14 +68,6 @@ public class ArmDriver implements Runnable {
 
         this.H = H;
 
-    }
-
-    void init(HardwareMap HM) {
-
-        /**initializes RobotHardware
-         * requires hardwaremap as input
-         */
-        H.init(HM);
     }
 
     public void run() {
@@ -94,24 +85,20 @@ public class ArmDriver implements Runnable {
          *
          */
 
-        double inches = 0;
+        if (isToDeg) {
 
-        while (!stop) {
+            MoveToDeg();
 
-            if (inches != this.inches) {
+        } else {
 
-                target = (int)(this.inches * COUNTS_PER_INCH);
-                H.vertical.setTargetPosition(target);
-
-            }
-
-            moveDone = !H.vertical.isBusy();
-            inches = this.inches;
+            MoveToHeight();
 
         }
+
+        moveDone = true;
     }
 
-    /*void setMoveToDeg(double MoveToAngle) {
+    void setMoveToDeg(double MoveToAngle) {
 
         this.armTargetAngle = Range.clip(MoveToAngle, 0, 135);
 
@@ -123,65 +110,58 @@ public class ArmDriver implements Runnable {
 
     private void MoveToDeg() {
 
-         do {
+        do {
 
-             armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
-             armOffAngle = Math.abs(armAngle - armTargetAngle);
+            armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
+            armOffAngle = Math.abs(armAngle - armTargetAngle);
 
-             if (armAngle > armTargetAngle) {
+            if (armAngle > armTargetAngle) {
 
-                 H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
+                H.Vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
-             } else {
+            } else {
 
-                 H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
+                H.Vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
-             }
+            }
 
         } while (armOffAngle > 2.5 && !stop);
 
-        H.vertical.setPosition(0.5);
+        H.Vertical.setPosition(0.5);
 
-    }*/
+    }
 
-    public void moveToInch(double inches) {
+    public void setMoveToHeight(double inches, double maxArmPower) {
 
-        this.inches = Range.clip(inches, 0, maxHieght);
+        this.maxArmPower = maxArmPower;
+        this.inches = Range.clip(inches, 0, 11.74);
+
+        isToDeg = false;
         moveDone = false;
-        stop = false;
-
     }
 
-    private void moveToBlock(byte blocknum) {
+    private void MoveToHeight() {
 
-        inches = Range.clip(((blocknum - 1) * 4) + 2.5, 0, maxHieght);
-        moveDone = false;
-        stop = false;
+        final double armLength = 11.75;
+        double armPos;
 
-    }
+        do {
 
-    void zero() {
+            armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
+            armPos = Math.sin(Math.toRadians(armAngle)) * armLength;
+            armOffAngle = Math.abs(armAngle - Math.toDegrees(Math.asin(inches / armLength)));
 
-        H.vertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        H.vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            if (armPos > inches) {
 
-    }
+                H.Vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
 
-    void stop() {
+            } else {
 
-        stop = true;
+                H.Vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
 
-    }
+            }
 
-    void pause() {
-
-        H.vertical.setPower(0);
-
-    }
-
-    void play() {
-
-        H.vertical.setPower(power);
+        } while (Math.abs(inches - armPos) > 0.075);
 
     }
 
