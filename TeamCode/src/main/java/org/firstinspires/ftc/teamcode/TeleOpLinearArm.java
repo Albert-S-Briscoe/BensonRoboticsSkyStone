@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.util.Range;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@TeleOp(name="TeleOp Lite", group="Linear Opmode")
+@TeleOp(name="TeleOp Linear Arm", group="Linear Opmode")
 public class TeleOpLinearArm extends LinearOpMode {
 
 
@@ -52,8 +52,8 @@ public class TeleOpLinearArm extends LinearOpMode {
     double Target;
     double rotateRadius;
     private final double rampDownAngl = 50;
-    private final byte maxblocks = 3;
-    private final double repeatDelay = 0.75;
+    private final byte maxblocks = 8;
+    private final double repeatDelay = 0.4;
 
     @Override
     public void runOpMode() {
@@ -361,7 +361,15 @@ public class TeleOpLinearArm extends LinearOpMode {
 
             }
 
+            telemetry.addData("encoders", H.vertical.getCurrentPosition());
+            telemetry.addData("blockpos", blockpos);
+            telemetry.addData("inches", arm.inches);
+            telemetry.update();
+
         }
+
+        arm.stop();
+        pool.shutdownNow();
 
     }
 

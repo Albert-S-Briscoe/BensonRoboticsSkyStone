@@ -34,6 +34,7 @@ public class RobotHardware {
 
     public DistanceSensor upperRange;
     public DistanceSensor lowerRange;
+    public DistanceSensor sensorRange;
     public AnalogInput    vertpos;
     public DigitalChannel limit;
     public BNO055IMU      imu;
@@ -65,9 +66,10 @@ public class RobotHardware {
         L           = HM.get(Servo.class, "GrabberLeft");
         R           = HM.get(Servo.class, "GrabberRight");
 
-        vertpos     = HM.get(AnalogInput.class, "vert_pos");
+        //vertpos     = HM.get(AnalogInput.class, "vert_pos");
         upperRange  = HM.get(DistanceSensor.class, "upper_range");
         lowerRange  = HM.get(DistanceSensor.class, "lower_range");
+        sensorRange  = HM.get(DistanceSensor.class, "sensor_range");
         imu         = HM.get(BNO055IMU.class, "imu");
 
         ////////////////////////////// Parameters //////////////////////////////
@@ -77,8 +79,9 @@ public class RobotHardware {
         parameters.calibrationDataFile  = "BNO055IMUCalibration.json";
         imu.initialize(parameters);
 
-        Rev2mDistanceSensor SensorTimeOfFlight = (Rev2mDistanceSensor) upperRange;
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) lowerRange;
+        Rev2mDistanceSensor SensorTimeOfFlight1 = (Rev2mDistanceSensor) upperRange;
+        Rev2mDistanceSensor SensorTimeOfFlight2 = (Rev2mDistanceSensor) lowerRange;
+        Rev2mDistanceSensor SensorTimeOfFlight3 = (Rev2mDistanceSensor) sensorRange;
 
         leftfront.setDirection(DcMotor.Direction.REVERSE);
         rightfront.setDirection(DcMotor.Direction.FORWARD);
@@ -90,8 +93,9 @@ public class RobotHardware {
         leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        vertical.setDirection(DcMotor.Direction.REVERSE);
+        vertical.setTargetPosition(0);
         vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        vertical.setDirection(DcMotor.Direction.FORWARD);
 
     }
 

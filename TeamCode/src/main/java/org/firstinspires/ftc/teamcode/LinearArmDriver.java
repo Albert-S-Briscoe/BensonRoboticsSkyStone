@@ -30,7 +30,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
 /**     put the following code inside runOpMode()
@@ -52,16 +51,16 @@ import com.qualcomm.robotcore.util.Range;
 
 public class LinearArmDriver implements Runnable {
 
-    private final double COUNTS_PER_REVOLUTION = 288;
-    private final double LITTLE_WHEEL_DIAMETER_INCHES = 4.0;
-    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (LITTLE_WHEEL_DIAMETER_INCHES * 3.14159);
-    private final double maxHieght = 15;
-    private final double power = 0.5;
+    private final double COUNTS_PER_REVOLUTION = 1120; // or maybe 2240 or 560
+    private final double WHEEL_DIAMETER_INCHES = 1.495;
+    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793);
+    private final double maxHieght = 28.75;
+    private final double power = 1;
 
     public boolean moveDone = false;
     public boolean stop = false;
     private int target;
-    private double inches = 0;
+    public double inches = 0;
 
     RobotHardware H;
 
@@ -86,19 +85,20 @@ public class LinearArmDriver implements Runnable {
          *    moveToBlock(int);
          */
 
-        double inches = 0;
+        //double inches = 0;
 
         while (!stop) {
 
-            if (inches != this.inches) {
+            //if (inches != this.inches) {
 
                 target = (int)(this.inches * COUNTS_PER_INCH);
                 H.vertical.setTargetPosition(target);
+                H.vertical.setPower(power);
 
-            }
+            //}
 
             moveDone = !H.vertical.isBusy();
-            inches = this.inches;
+            //inches = this.inches;
 
         }
     }
@@ -158,7 +158,7 @@ public class LinearArmDriver implements Runnable {
          *  block n = foundation + (n - 1) blocks
          */
 
-        inches = Range.clip((blocknum * 4) + 2.5, 0, maxHieght);
+        inches = Range.clip((blocknum * 4) - 2, 0, maxHieght);
         moveDone = false;
         stop = false;
 
@@ -171,6 +171,7 @@ public class LinearArmDriver implements Runnable {
          */
 
         H.vertical.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        H.vertical.setTargetPosition(0);
         H.vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
     }
