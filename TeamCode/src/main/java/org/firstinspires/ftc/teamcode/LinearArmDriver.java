@@ -34,11 +34,7 @@ import com.qualcomm.robotcore.util.Range;
 
 /**     put the following code inside runOpMode()
 
-            LinearArmDriver arm = new LinearArmDriver(hardwareMap);
-
-        if you are going to run anything on another thread then add this
-        at the top of runOpMode()
-
+            LinearArmDriver arm = new LinearArmDriver(H);
             ExecutorService pool = Executors.newFixedThreadPool(1);
 
         to call a function use this format
@@ -47,20 +43,23 @@ import com.qualcomm.robotcore.util.Range;
 
         info for individual functions are included at the top of the function
 
+        In runOpMode() after all the game stuff, add this to shutdown the thread
+
+            arm.stop();
+            pool.shutdownNow();
+
  */
 
 public class LinearArmDriver implements Runnable {
 
-    private final double COUNTS_PER_REVOLUTION = 1120; // or maybe 2240 or 560
-    private final double WHEEL_DIAMETER_INCHES = 1.495;
-    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793);
-    private final double maxHieght = 28.75;
+
+    private final double maxHeight = 29.25;
     private final double power = 1;
 
     public boolean moveDone = false;
     public boolean stop = false;
-    private int target;
     public double inches = 0;
+    int addTarget = 0;
 
     RobotHardware H;
 
@@ -85,70 +84,48 @@ public class LinearArmDriver implements Runnable {
          *    moveToBlock(int);
          */
 
-        //double inches = 0;
+        final double COUNTS_PER_REVOLUTION = 1120; // maybe 2240 or 560
+        final double WHEEL_DIAMETER_INCHES = 1.495;
+        final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793);
+        int target;
 
         while (!stop) {
 
-            //if (inches != this.inches) {
-
-                target = (int)(this.inches * COUNTS_PER_INCH);
-                H.vertical.setTargetPosition(target);
-                H.vertical.setPower(power);
-
-            //}
+            addTarget = 3 * Range.clip((int)(this.inches * COUNTS_PER_INCH) - H.vertical.getCurrentPosition(), -33, 33);
+            target = (int)(this.inches * COUNTS_PER_INCH) + addTarget;
+            H.vertical.setTargetPosition(target);
+            H.vertical.setPower(power);
 
             moveDone = !H.vertical.isBusy();
-            //inches = this.inches;
 
         }
     }
 
-    /*void setMoveToDeg(double MoveToAngle) {
-
-        this.armTargetAngle = Range.clip(MoveToAngle, 0, 135);
-
-        isToDeg = true;
-        moveDone = false;
-        stop = false;
-
-    }
-
-    private void MoveToDeg() {
-
-         do {
-
-             armAngle = (H.vertpos.getVoltage() - zeroVolts) * degreesPerVolt;
-             armOffAngle = Math.abs(armAngle - armTargetAngle);
-
-             if (armAngle > armTargetAngle) {
-
-                 H.vertical.setPosition(1 - Range.clip(1 / armOffAngle, 0, .4));
-
-             } else {
-
-                 H.vertical.setPosition(0 + Range.clip(1 / armOffAngle, 0, .4));
-
-             }
-
-        } while (armOffAngle > 2.5 && !stop);
-
-        H.vertical.setPosition(0.5);
-
-    }*/
-
-    public void moveToInch(double inches) {
+    void moveToInch(double inch) {
 
         /**
          *  moves the arm to specified number of inches above the ground
          */
 
-        this.inches = Range.clip(inches, 0, maxHieght);
+        this.inches = Range.clip(inch, 0, maxHeight);
         moveDone = false;
         stop = false;
 
     }
 
-    public void moveToBlock(int blocknum) {
+    void moveInches(double inches) {
+
+        /**
+         *  moves the arm a specified number of inches up or down
+         */
+
+        this.inches = Range.clip(this.inches + inches, 0, maxHeight);
+        moveDone = false;
+        stop = false;
+
+    }
+
+    void moveToBlock(int blocknum) {
 
         /**
          *  moves the arm to a specific block
@@ -158,7 +135,7 @@ public class LinearArmDriver implements Runnable {
          *  block n = foundation + (n - 1) blocks
          */
 
-        inches = Range.clip((blocknum * 4) - 2, 0, maxHieght);
+        inches = Range.clip((blocknum * 4) - 0.85, 0, maxHeight);
         moveDone = false;
         stop = false;
 

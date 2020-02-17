@@ -49,6 +49,8 @@ public class RobotHardware {
     public DcMotor        vertical;
     public Servo          grabber;
     public Servo          Vertical;
+    public Servo          sensorServo;
+    public Servo          centerServo;
     public Servo          L;
     public Servo          R;
 
@@ -61,7 +63,9 @@ public class RobotHardware {
         leftback    = HM.get(DcMotor.class, "LB_drive");
         rightback   = HM.get(DcMotor.class, "RB_drive");
 
-        grabber     = HM.get(Servo.class, "grabber");
+        grabber     = HM.get(Servo.class, "grabber");  // 1 = open, 0 = closed
+        sensorServo = HM.get(Servo.class, "sensor");
+        centerServo = HM.get(Servo.class, "center");
         vertical    = HM.get(DcMotor.class, "vertical");
         L           = HM.get(Servo.class, "GrabberLeft");
         R           = HM.get(Servo.class, "GrabberRight");
@@ -69,7 +73,7 @@ public class RobotHardware {
         //vertpos     = HM.get(AnalogInput.class, "vert_pos");
         upperRange  = HM.get(DistanceSensor.class, "upper_range");
         lowerRange  = HM.get(DistanceSensor.class, "lower_range");
-        sensorRange  = HM.get(DistanceSensor.class, "sensor_range");
+        sensorRange = HM.get(DistanceSensor.class, "sensor_range");
         imu         = HM.get(BNO055IMU.class, "imu");
 
         ////////////////////////////// Parameters //////////////////////////////
@@ -117,4 +121,17 @@ public class RobotHardware {
         }
 
     }
+
+    public void block(boolean closed) {
+
+        if (closed) {
+            centerServo.setPosition(0.9);
+            grabber.setPosition(0);
+        } else {
+            centerServo.setPosition(0.4);
+            grabber.setPosition(1);
+        }
+
+    }
+
 }
