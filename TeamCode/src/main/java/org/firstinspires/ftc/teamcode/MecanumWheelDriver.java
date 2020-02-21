@@ -83,8 +83,8 @@ public class MecanumWheelDriver implements Runnable {
     //final double COUNTS_PER_DEGREE = ((ROBOT_DIAMETER_INCHES * 3.14159) / 360) * COUNTS_PER_INCH;
 
     private final double turnAccrate = 1;
-    private double speedmin = 0.15;
-    private int rampDownAngl = 50;
+    private double speedmin = 0.25;
+    private int rampDownAngl = 45;
     boolean selfcorrect = true;
 
     int LF_RBtarget;
@@ -541,12 +541,12 @@ public class MecanumWheelDriver implements Runnable {
          * set ramp_Down_Angle to 1 for to not ramp down
          */
         if (ramp_Down_Angle <= 0) {
-            rampDownAngl = 50;
+            rampDownAngl = 45;
         } else {
             rampDownAngl = ramp_Down_Angle;
         }
         if (minimum_Speed <= 0) {
-            speedmin = 0.15;
+            speedmin = 0.25;
         } else {
             speedmin = minimum_Speed;
         }

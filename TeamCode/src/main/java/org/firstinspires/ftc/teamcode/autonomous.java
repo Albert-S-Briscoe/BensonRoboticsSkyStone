@@ -74,12 +74,11 @@ public class autonomous extends LinearOpMode {
     private int blockPos;
 
     //final double speed_slow = .35;
-    final double sidewaysInches = 1.35;
+    final double sidewaysInches = 1.4;
     final double speed_norm = .6;
     final double speed_fast = 1;
-    final double armPower = 0.3;
     final byte field_side = 1;   // -1 = red, 1 = blue
-    final int maxOffsetForMiddelBlock = 175;
+    final int maxOffsetForMiddelBlock = 120;
     final double reasonability = 2;
     
     
@@ -115,10 +114,11 @@ public class autonomous extends LinearOpMode {
         pool.execute(arm);
 
         H.grab(false);
-        arm.moveInches(4);
+        arm.moveToInch(3);
         H.block(false);
         drive.RunWithEncoders(true);
     
+        
         if (opModeIsActive()) {
             telemetry.addData("Status", "loop started");
             telemetry.update();
@@ -126,6 +126,9 @@ public class autonomous extends LinearOpMode {
         }
         if (opModeIsActive()) {
             _1A();
+        }
+        if (opModeIsActive()) {
+            pickUpSkystone();
         }
         if (opModeIsActive()) {
             _2A();
@@ -152,16 +155,10 @@ public class autonomous extends LinearOpMode {
 
 
     private void _1A() {
-        
-        drive.stop();
-        
-        drive.setrotate(0, speed_fast, true);
-        pool.execute(drive);
-        waitForMoveDone(0);
 
-        arm.moveToInch(0);
+        arm.moveToInch(1.5);
         
-        drive.setMoveInches(0,30, speed_fast, 0);
+        drive.setMoveInches(0,28, speed_fast, 0);
         pool.execute(drive);
         waitForMoveDone(0);
         
@@ -188,13 +185,6 @@ public class autonomous extends LinearOpMode {
     }
 
     private void _2A() {
-        
-        H.block(true);
-        sleep(500);
-        arm.moveToInch(6);
-        drive.setMoveInches(180, 5, speed_fast, 0);
-        pool.execute(drive);
-        waitForMoveDone(0);
 
         drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
@@ -227,18 +217,10 @@ public class autonomous extends LinearOpMode {
         pool.execute(drive);
         drive.setRampDown(0, 0);
         sleep(1000);
-        drive.stop = true;
+        drive.stop();
         waitForMoveDone(0);
 
-        /*drive.move(0, speed_fast, 0);
-        sleep(500);
-        drive.stop();*/
-
         H.grab(false);
-
-
-
-        //drive.MoveInches(0, 12, speed_norm, -2);
     }
 
     private void _4A() {
@@ -287,24 +269,17 @@ public class autonomous extends LinearOpMode {
     }
 
     private void findSkystone() {
-        while (!isStopRequested() && runtime.seconds() < 6 && !found) {
+        while (!isStopRequested() && runtime.seconds() < 4 && !found) {
             if (tfod != null) {
-                telemetry.addData("TFmode = ", mode);
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                 if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
-
-                    // step through the list of recognitions and display boundary info.
-                    int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
                             objleft = (int) recognition.getLeft();
                             objright = (int) recognition.getRight();
                             objcenter = (objleft + objright) / 2;
-                            offset = objcenter - 640;
-                            if (objleft - objright < 250) {
+                            offset = objcenter - 320;
+                            if (objright - objleft < 250) {
                                 if (Math.abs(offset) < maxOffsetForMiddelBlock) {
                                     blockPos = 0;
                                 } else {
@@ -313,108 +288,52 @@ public class autonomous extends LinearOpMode {
                                 found = true;
                             }
                         }
-                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
                     }
                 }
             }
-        }
-        if (!isStopRequested() && blockPos != 0) {
-            drive.setMoveInches(-90 * blockPos, 8.5 * sidewaysInches, speed_fast, 0);
-            pool.execute(drive);
-            sleep(750);
         }
     }
 
-    /*private void findSkystone() {
-        offset = -500 * field_side;
-        while (!isStopRequested() && !found && runtime.seconds() < 8) {
-
-            if (tfod != null) {
-                telemetry.addData("TFmode = ", mode);
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
-
-                    // step through the list of recognitions and display boundary info.
-                    int i = 0;
-                    for (Recognition recognition : updatedRecognitions) {
-                        if (recognition.getLabel() == "Skystone") {
-                            objright = (int) recognition.getTop();
-                            objleft = (int) recognition.getBottom();
-                            objcenter = (objleft + objright) / 2;
-                            offset = objcenter - 640;
-                            break;
-                        }
-                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
-                    }
-                }
-            }
-            if (Math.abs(offset) < 25) {
-                drive.stop();
-                found = true;
-            } else {
-                drive.move(-90, speed_norm * -Range.clip(offset / 30, -1, 1), 0);
-
-            }
-            telemetry.update();
-        }
-    }*/
-
     private void pickUpSkystone() {
-        H.grabber.setPosition(1);
-        /*while (!isStopRequested() && (H.upperRange.getDistance(DistanceUnit.MM) < 420 || H.vertpos.getVoltage() > .4)) {
-            if (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) < 420) {
-                drive.move(180, speed_norm, 0);
-            } else {
-                drive.stop();
-            }
-            if (!isStopRequested() && H.vertpos.getVoltage() > .4) {
-                H.Vertical.setPosition(1);
-            } else {
-                H.Vertical.setPosition(.5);
-            }
-        }*/
-        //drive.setMoveInches(180, 2, speed_norm, 0);
-        //pool.execute(drive);
-        if (!drive.moveDone) {
-            sleep(1250);
+        
+        if (!isStopRequested() && blockPos != 0) {
+            drive.setMoveInches(-90 * blockPos, 8.5 * sidewaysInches, speed_fast, 0);
+            pool.execute(drive);
+            sleep(1000);
         }
-        drive.stop = true;
-        waitForMoveDone(0);
-        //arm.setMoveToDeg(5);
+        drive.stop();
+    
+        arm.moveToInch(0);
+        
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-        drive.setMoveInches(0, 7.5, speed_norm, 0);
+    
+    
+        H.block(true);
+        
+        drive.setMoveInches(0, 2, speed_fast, 0);
         pool.execute(drive);
-        waitForMoveDone(2);
-        //arm.setMoveToDeg(2);
-        waitForMoveDone(1);
-        H.grabber.setPosition(0);
-        sleep(750); // wait for servo to move
-        //arm.setMoveToDeg(35);
-        drive.setMoveInches(0, 6, speed_norm, 0);
+        waitForMoveDone(0);
+        
+        sleep(250);
+        
+        arm.moveToInch(6);
+        
+        drive.setMoveInches(180, 5, speed_fast, 0);
         pool.execute(drive);
-        waitForMoveDone(2);
+        waitForMoveDone(0);
+    
     }
 
     private void placeSkystoneAndGrab() {
     
         arm.moveToInch(3);
+        sleep(200);
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-        inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + .5;
+        inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + 0.5;
         drive.setMoveInches(0, inches_to_move, speed_fast, 0);
         pool.execute(drive);
         arm.moveToInch(3);
@@ -429,7 +348,7 @@ public class autonomous extends LinearOpMode {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minimumConfidence = 0.72;
+        tfodParameters.minimumConfidence = 0.75;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT);//, LABEL_SECOND_ELEMENT);
     }
