@@ -79,7 +79,7 @@ public class MecanumWheelDriver implements Runnable {
     private final double COUNTS_PER_REVOLUTION = 288;
     private final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     //final double ROBOT_DIAMETER_INCHES = 23;
-    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.14159);
+    final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.14159);
     //final double COUNTS_PER_DEGREE = ((ROBOT_DIAMETER_INCHES * 3.14159) / 360) * COUNTS_PER_INCH;
 
     private final double turnAccrate = 1;
@@ -252,10 +252,17 @@ public class MecanumWheelDriver implements Runnable {
         /**stops all the motors
          */
 
+        stop = true;
+        
         H.leftfront.  setPower(0);
         H.rightfront. setPower(0);
         H.leftback.   setPower(0);
         H.rightback.  setPower(0);
+    
+        H.leftfront.setTargetPosition(H.leftfront.getCurrentPosition());
+        H.rightfront.setTargetPosition(H.rightfront.getCurrentPosition());
+        H.leftback.setTargetPosition(H.leftback.getCurrentPosition());
+        H.rightback.setTargetPosition(H.rightback.getCurrentPosition());
 
         H.leftfront.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);

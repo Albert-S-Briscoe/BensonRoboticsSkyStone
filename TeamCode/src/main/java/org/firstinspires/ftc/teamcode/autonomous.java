@@ -35,6 +35,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
@@ -61,7 +62,7 @@ public class autonomous extends LinearOpMode {
     private ElapsedTime         runtime  = new ElapsedTime();
     private RobotHardware       H        = new RobotHardware();
     private MecanumWheelDriver  drive    = new MecanumWheelDriver(H);
-    private ArmDriver           arm      = new ArmDriver(H);
+    private LinearArmDriver     arm      = new LinearArmDriver(H);
     private ExecutorService     pool     = Executors.newFixedThreadPool(2);
 
     private int mode = 1;
@@ -73,13 +74,15 @@ public class autonomous extends LinearOpMode {
     private int blockPos;
 
     //final double speed_slow = .35;
-    final double sidewaysInches = 1.19;
+    final double sidewaysInches = 1.35;
     final double speed_norm = .6;
     final double speed_fast = 1;
     final double armPower = 0.3;
     final byte field_side = 1;   // -1 = red, 1 = blue
     final int maxOffsetForMiddelBlock = 175;
-
+    final double reasonability = 2;
+    
+    
     private boolean found = false;
     private double inches_to_move;
 
@@ -89,8 +92,7 @@ public class autonomous extends LinearOpMode {
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = CAMERA_CHOICE;
-        //parameters.cameraName = hardwareMap.get(WebcamName.class, "frontCam");
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
@@ -109,20 +111,21 @@ public class autonomous extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        arm.zero();
+        pool.execute(arm);
 
         H.grab(false);
+        arm.moveInches(4);
+        H.block(false);
         drive.RunWithEncoders(true);
-
-        if (opModeIsActive()) {
-            _1A();
-        }
+    
         if (opModeIsActive()) {
             telemetry.addData("Status", "loop started");
             telemetry.update();
             findSkystone();
         }
         if (opModeIsActive()) {
-            pickUpSkystone();
+            _1A();
         }
         if (opModeIsActive()) {
             _2A();
@@ -137,13 +140,9 @@ public class autonomous extends LinearOpMode {
             _4A();
         }
 
-        drive.setrotate(0,0, false);
-        drive.setMoveInches(0, 0, 0, 0);
-        arm.stop = true;
-        pool.shutdownNow();
+        arm.stop();
         drive.stop();
-        drive.H.Vertical.setPosition(0.5);
-        H.Vertical.setPosition(0.5);
+        pool.shutdownNow();
         H.leftfront.setPower(0);
         H.rightfront.setPower(0);
         H.leftback.setPower(0);
@@ -153,21 +152,34 @@ public class autonomous extends LinearOpMode {
 
 
     private void _1A() {
+        
+        drive.stop();
+        
+        drive.setrotate(0, speed_fast, true);
+        pool.execute(drive);
+        waitForMoveDone(0);
 
-        arm.setMoveToDeg(25);
-        pool.execute(arm);
+        arm.moveToInch(0);
+        
+        drive.setMoveInches(0,30, speed_fast, 0);
+        pool.execute(drive);
+        waitForMoveDone(0);
+        
+        /*while (!isStopRequested() && runtime.seconds() < 7 && !drive.moveDone && Math.abs(H.upperRange.getDistance(DistanceUnit.INCH) - (drive.H.leftback.getTargetPosition() - drive.H.leftback.getCurrentPosition()) / drive.COUNTS_PER_INCH) < reasonability) {
+            
+            drive.changeTargetInches(H.upperRange.getDistance(DistanceUnit.INCH) - 1, false);
+            
+        }
 
-        while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 650) {
-                drive.move(0, speed_norm, 0);
+        /*while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.MM) > 650) {
+            drive.move(0, speed_norm, 0);
             if (runtime.seconds() > 4.5) {
                 drive.stop();
                 while (!isStopRequested()) {
                     idle();
                 }
             }
-        }
-
-        drive.stop();
+        }*/
 
     }
 
@@ -176,30 +188,23 @@ public class autonomous extends LinearOpMode {
     }
 
     private void _2A() {
-
-        drive.setrotate(90 * field_side, speed_norm, true);
+        
+        H.block(true);
+        sleep(500);
+        arm.moveToInch(6);
+        drive.setMoveInches(180, 5, speed_fast, 0);
         pool.execute(drive);
         waitForMoveDone(0);
 
-        arm.setMoveToDeg(20);
-        pool.execute(arm);
-
-        drive.setMoveInches(0, 60, speed_fast, 90 * field_side);
+        drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
-        waitForMoveDone(1);
-        sleep(1500);
-        arm.setMoveToDeg(35);
-        pool.execute(arm);
-
         waitForMoveDone(0);
 
+        arm.moveToInch(0);
 
-
-        while (!isStopRequested() && H.upperRange.getDistance(DistanceUnit.INCH) > 25) {
-            drive.moveWithGyro(0, speed_fast * Range.clip((H.upperRange.getDistance(DistanceUnit.INCH) - 25) / 15, 0.25, 1 ), 90 * field_side);
-        }
-
-        drive.stop();
+        drive.setMoveInches(0, 84 + 8 * blockPos, speed_fast, 90 * field_side);
+        pool.execute(drive);
+        waitForMoveDone(0);
 
     }
 
@@ -215,7 +220,7 @@ public class autonomous extends LinearOpMode {
         pool.execute(drive);
         waitForMoveDone(0);
         drive.setRampDown(25, 0.4);
-        drive.setrotate(90 * field_side, speed_fast, false);
+        drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
         drive.setMoveInches(0, 11, speed_fast, 90 * field_side);
@@ -237,18 +242,19 @@ public class autonomous extends LinearOpMode {
     }
 
     private void _4A() {
+        drive.move(180, speed_fast, 0);
+        sleep(150);
+        drive.stop();
         drive.move(-90, speed_fast, 0);
         sleep(300);
         drive.stop();
         drive.setrotate(90 * field_side, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-        arm.setMoveToDeg(20);
-        pool.execute(arm);
-        //drive.move(90 * field_side, speed_norm, 0);
-        //sleep(600);
         drive.setMoveInches(180, 40, speed_fast, -1);
         pool.execute(drive);
+        sleep(500);
+        arm.moveToInch(0);
         waitForMoveDone(2);
     }
 
@@ -294,15 +300,15 @@ public class autonomous extends LinearOpMode {
                     int i = 0;
                     for (Recognition recognition : updatedRecognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
-                            objleft = (int) recognition.getTop();
-                            objright = (int) recognition.getBottom();
+                            objleft = (int) recognition.getLeft();
+                            objright = (int) recognition.getRight();
                             objcenter = (objleft + objright) / 2;
                             offset = objcenter - 640;
                             if (objleft - objright < 250) {
                                 if (Math.abs(offset) < maxOffsetForMiddelBlock) {
                                     blockPos = 0;
                                 } else {
-                                    blockPos = Range.clip(offset, -1, 1);
+                                    blockPos = (int)Math.signum(offset);
                                 }
                                 found = true;
                             }
@@ -317,8 +323,9 @@ public class autonomous extends LinearOpMode {
             }
         }
         if (!isStopRequested() && blockPos != 0) {
-            drive.setMoveInches(-90 * blockPos, 8.5 * sidewaysInches, speed_fast, -2);
+            drive.setMoveInches(-90 * blockPos, 8.5 * sidewaysInches, speed_fast, 0);
             pool.execute(drive);
+            sleep(750);
         }
     }
 
@@ -384,38 +391,35 @@ public class autonomous extends LinearOpMode {
         }
         drive.stop = true;
         waitForMoveDone(0);
-        arm.setMoveToDeg(5);
-        pool.execute(arm);
+        //arm.setMoveToDeg(5);
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
         drive.setMoveInches(0, 7.5, speed_norm, 0);
         pool.execute(drive);
         waitForMoveDone(2);
-        arm.setMoveToDeg(2);
-        pool.execute(arm);
+        //arm.setMoveToDeg(2);
         waitForMoveDone(1);
         H.grabber.setPosition(0);
         sleep(750); // wait for servo to move
-        arm.setMoveToDeg(35);
-        pool.execute(arm);
+        //arm.setMoveToDeg(35);
         drive.setMoveInches(0, 6, speed_norm, 0);
         pool.execute(drive);
         waitForMoveDone(2);
     }
 
     private void placeSkystoneAndGrab() {
-
+    
+        arm.moveToInch(3);
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
         inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + .5;
-        drive.setMoveInches(0, inches_to_move, speed_norm, 0);
+        drive.setMoveInches(0, inches_to_move, speed_fast, 0);
         pool.execute(drive);
-        arm.setMoveToDeg(50);
-        pool.execute(arm);
-        H.grabber.setPosition(1);
+        arm.moveToInch(3);
         waitForMoveDone(0);
+        H.block(false);
         H.grab(true);
         sleep(500);
 
@@ -425,7 +429,7 @@ public class autonomous extends LinearOpMode {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minimumConfidence = 0.8;
+        tfodParameters.minimumConfidence = 0.72;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT);//, LABEL_SECOND_ELEMENT);
     }

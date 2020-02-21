@@ -91,8 +91,15 @@ public class LinearArmDriver implements Runnable {
 
         while (!stop) {
 
-            addTarget = 3 * Range.clip((int)(this.inches * COUNTS_PER_INCH) - H.vertical.getCurrentPosition(), -33, 33);
-            target = (int)(this.inches * COUNTS_PER_INCH) + addTarget;
+            addTarget = 3 * Range.clip((int)(inches * COUNTS_PER_INCH) - H.vertical.getCurrentPosition(), -33, 33);
+            
+            if ((inches * COUNTS_PER_INCH) + addTarget < 0) {
+                
+                addTarget *= 3;
+                
+            }
+            
+            target = (int)(inches * COUNTS_PER_INCH) + addTarget;
             H.vertical.setTargetPosition(target);
             H.vertical.setPower(power);
 
@@ -135,7 +142,7 @@ public class LinearArmDriver implements Runnable {
          *  block n = foundation + (n - 1) blocks
          */
 
-        inches = Range.clip((blocknum * 4) - 0.85, 0, maxHeight);
+        inches = Range.clip((blocknum * 4) - 0.75, 0, maxHeight);
         moveDone = false;
         stop = false;
 

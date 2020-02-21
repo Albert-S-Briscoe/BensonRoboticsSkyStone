@@ -37,7 +37,6 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,14 +47,11 @@ public class TeleOpLinearArm extends LinearOpMode {
 
     private double LF_RB = 0;  //leftfront and rightback motors
     private double RF_LB = 0;  //rightfront and leftback motors
-
-    private  final double COUNTS_PER_REVOLUTION = 288;
-    private final double WHEEL_DIAMETER_INCHES = 4.0;
-    private final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793248);
-    private int leftfrontStartPos;
-    private int rightfrontStartPos;
-    private int leftbackStartPos;
-    private int rightbackStartPos;
+    
+    private boolean[] button = {false, false, false, false, false, false};
+    // 0 = half speed, 1 = compass, 2 = POV, 3 = grabber, 4 = arm up, 5 = arm down
+    private boolean[] toggle = {false, true, false, false};
+    // 0 = half speed, 1 = compass, 2 = POV, 3 = grabber
 
     private double agl_frwd;
 
@@ -97,31 +93,20 @@ public class TeleOpLinearArm extends LinearOpMode {
         double sinAngle;
         double Target;
         double rotateRadius;
-
-        boolean slowDown = false;
-        boolean speedButton = false;
-        boolean useCompass = true;
-        boolean compassButton = false;
-        boolean grabberPosButton = false;
-        boolean usePOV = true;
-        boolean POVButton = false;
-
-        boolean upButton = false;
-        boolean downButton = false;
         int blockpos = 0;
         double upstartTime = 0;
         double downstartTime = 0;
 
-        boolean  position = false;
+        //boolean  position = false;
 
         double agl_frwd = 180;
         double heading = 0;
 
-        final byte maxblocks = 8;
+        final byte maxblocks = 7;
         final double repeatDelay = 0.425;
-        final double sideOffset = 4;
+        final double sideOffset = 3.5;
         final double forwardOffset = 0.75;
-        final double tolerance = 0.5;
+        final double tolerance = 0.50;
         double block_X = 0;
         double block_Y = 0;
         double angleToBlockPos;
@@ -141,18 +126,19 @@ public class TeleOpLinearArm extends LinearOpMode {
             y = -gamepad1.left_stick_y;
             x = gamepad1.left_stick_x;
 
-            if (usePOV) {
+            if (toggle[2]) {
 
                 rotateRadius = -((Math.log10((-Range.clip(Math.hypot(gamepad1.right_stick_x, (-gamepad1.right_stick_y)), 0, 1) + 1) * logCurve + 1)) / Math.log10(logCurve + 1)) * 0.825 + 1;
 
                 if (rotateRadius > 0.2) {
-                    Target = drive.addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), 90);
-                    Rotate = drive.POVRotate(Target, rotateRadius);
+                    Target = drive.addDegree(Math.toDegrees(Math.atan2(-gamepad1.right_stick_y, gamepad1.right_stick_x)), -90);
+                    Rotate = drive.POVRotate(Target + agl_frwd, rotateRadius);
                 } else {
                     Rotate = 0;
                 }
 
             } else {
+                
                 if (Math.abs(gamepad1.right_stick_x) > 0.05) {
 
                     if (gamepad1.right_stick_x > 0) {
@@ -170,6 +156,7 @@ public class TeleOpLinearArm extends LinearOpMode {
                     Rotate = 0;
 
                 }
+                
             }
 
             if (Math.hypot(x, y) > 0.05) {
@@ -222,26 +209,25 @@ public class TeleOpLinearArm extends LinearOpMode {
                     
                     if (!first) {
         
-                        H.leftfront.setPower(0);
-                        H.rightfront.setPower(0);
-                        H.leftback.setPower(0);
-                        H.rightback.setPower(0);
+                        H.leftfront  .setPower(0);
+                        H.rightfront .setPower(0);
+                        H.leftback   .setPower(0);
+                        H.rightback  .setPower(0);
         
-                        H.sensorServo.setPosition(0);
+                        H.sensorServo.setPosition(1);
                         sleep(500);
                         
                         first = true;
                         
                     }
-                    
     
-                    block_X = H.sensorRange.getDistance(DistanceUnit.INCH) - sideOffset;
+                    block_X = (H.sensorRange.getDistance(DistanceUnit.INCH) - sideOffset) * 1.19;
                     block_Y = H.lowerRange.getDistance(DistanceUnit.INCH) - forwardOffset;
     
                     if (block_Y < 1.5) {
         
                         angleToBlockPos = Math.atan2(block_X, block_Y);
-                        distanceToBlockPos = Math.hypot(block_X, block_Y) + 0.5;
+                        distanceToBlockPos = Math.hypot(block_X, block_Y) + 0.4;
         
                     } else {
         
@@ -250,16 +236,16 @@ public class TeleOpLinearArm extends LinearOpMode {
         
                     }
     
-                    if (distanceToBlockPos > tolerance) {
+                    if (distanceToBlockPos - 0.4 > tolerance) {
         
                         MoveInches(angleToBlockPos, distanceToBlockPos);
                         MoveLoop(1);
         
                     } else {
         
-                        H.sensorServo.setPosition(1);
-                        arm.moveInches(-0.5);
-                        position = false;
+                        H.sensorServo.setPosition(0.05);
+                        arm.moveInches(-0.75);
+                        toggle[3] = false; // grabber
                         H.block(false);
                         sleep(450);
                         arm.moveToBlock(blockpos);
@@ -278,27 +264,27 @@ public class TeleOpLinearArm extends LinearOpMode {
                     this.LF_RB = 0;
                     this.RF_LB = 0;
 
-                    H.sensorServo.setPosition(1);
-                    H.leftfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.sensorServo.setPosition(0.05);
+                    H.leftfront  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.rightfront .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.leftback   .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.rightback  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
                 }
 
-                if (slowDown) {
+                if (toggle[0]) {
 
-                    H.leftfront.setPower(leftfrontPower / 2);
-                    H.rightfront.setPower(rightfrontPower / 2);
-                    H.leftback.setPower(leftbackPower / 2);
-                    H.rightback.setPower(rightbackPower / 2);
+                    H.leftfront  .setPower(leftfrontPower / 2);
+                    H.rightfront .setPower(rightfrontPower / 2);
+                    H.leftback   .setPower(leftbackPower / 2);
+                    H.rightback  .setPower(rightbackPower / 2);
 
                 } else {
 
-                    H.leftfront.setPower(leftfrontPower);
-                    H.rightfront.setPower(rightfrontPower);
-                    H.leftback.setPower(leftbackPower);
-                    H.rightback.setPower(rightbackPower);
+                    H.leftfront  .setPower(leftfrontPower);
+                    H.rightfront .setPower(rightfrontPower);
+                    H.leftback   .setPower(leftbackPower);
+                    H.rightback  .setPower(rightbackPower);
 
                 }
 
@@ -308,72 +294,59 @@ public class TeleOpLinearArm extends LinearOpMode {
 
             if (gamepad1.left_trigger - gamepad1.right_trigger > 0.25) {
 
-                if (!upButton || runtime.seconds() > upstartTime + repeatDelay) {
+                if (!button[4] || runtime.seconds() > upstartTime + repeatDelay) {
 
                     upstartTime = runtime.seconds();
                     blockpos = Range.clip(blockpos - 1, 0, maxblocks);
-                    upButton = true;
+                    button[4] = true;
 
                 }
 
             } else {
-
-                upButton = false;
+    
+                button[4] = false;
 
             }
 
             if (gamepad1.right_trigger - gamepad1.left_trigger > 0.25) {
 
-                if (!downButton || runtime.seconds() > downstartTime + repeatDelay) {
+                if (!button[5] || runtime.seconds() > downstartTime + repeatDelay) {
 
                     downstartTime = runtime.seconds();
                     blockpos = Range.clip(blockpos + 1, 0, maxblocks);
-                    downButton = true;
+                    button[5] = true;
 
                 }
 
             } else {
-
-                downButton = false;
+    
+                button[5] = false;
 
             }
 
             arm.moveToBlock(blockpos);
 
             ////////////////////////////// Buttons //////////////////////////////
-
-            if (gamepad1.x) {
-
-                if (!POVButton) {
-
-                    usePOV = !usePOV;
-                    POVButton = true;
-
-                }
-
+    
+            testButton(gamepad1.left_bumper | gamepad1.left_stick_button, 0); // half speed
+            
+            testButton(gamepad1.back, 1); // compass
+            
+            if (toggle[1]) {
+        
+                heading = H.getheading();
+        
             } else {
-
-                POVButton = false;
-
+            
+                heading = agl_frwd;
+            
             }
-
-            if (gamepad1.right_bumper || gamepad1.a) {
-
-                if (!grabberPosButton) {
-
-                    position = !position;
-
-                    grabberPosButton = true;
-
-                }
-
-            } else {
-
-                grabberPosButton = false;
-
-            }
-
-            H.block(position);
+            
+            testButton(gamepad1.x, 2); // POV
+            
+            testButton(gamepad1.right_bumper || gamepad1.a, 3); // grabber
+            
+            H.block(toggle[3]);
 
             if (gamepad1.dpad_up) {
 
@@ -384,50 +357,10 @@ public class TeleOpLinearArm extends LinearOpMode {
                 H.grab(true);
 
             }
-
-            if (gamepad1.back) {
-
-                if (!compassButton) {
-
-                    useCompass = !useCompass;
-                    compassButton = true;
-
-                }
-
-            } else {
-
-                compassButton = false;
-
-            }
-
-            if (useCompass) {
-
-                heading = H.getheading();
-
-            } else {
-
-                heading = agl_frwd;
-
-            }
-
+            
             if (gamepad1.start && stickTotal < 0.1) {
 
                 agl_frwd = heading;
-
-            }
-
-            if (gamepad1.left_bumper | gamepad1.left_stick_button) {
-
-                if (!speedButton) {
-
-                    speedButton = true;
-                    slowDown = !slowDown;
-
-                }
-
-            } else {
-
-                speedButton = false;
 
             }
 
@@ -446,28 +379,24 @@ public class TeleOpLinearArm extends LinearOpMode {
         pool.shutdownNow();
 
     }
-
-    void changeTargetInches(double inches, boolean reletiveToStart) {
-
-        int LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
-        int RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
-
-        if (reletiveToStart) {
-
-            H.leftfront.setTargetPosition(leftfrontStartPos + LF_RBtarget);
-            H.rightfront.setTargetPosition(rightfrontStartPos + RF_LBtarget);
-            H.leftback.setTargetPosition(leftbackStartPos + RF_LBtarget);
-            H.rightback.setTargetPosition(rightbackStartPos + LF_RBtarget);
-
+    
+    private void testButton(boolean gamepadIn, int numb) {
+    
+        if (gamepadIn) {
+        
+            if (!button[numb]) {
+            
+                toggle[numb] = !toggle[numb];
+                button[numb] = true;
+            
+            }
+        
         } else {
-
-            H.leftfront.setTargetPosition(H.leftfront.getCurrentPosition() + LF_RBtarget);
-            H.rightfront.setTargetPosition(H.rightfront.getCurrentPosition() + RF_LBtarget);
-            H.leftback.setTargetPosition(H.leftback.getCurrentPosition() + RF_LBtarget);
-            H.rightback.setTargetPosition(H.rightback.getCurrentPosition() + LF_RBtarget);
-
+        
+            button[numb] = false;
+        
         }
-
+        
     }
 
     private void MoveInches(double Angle_input, double inches) {
@@ -479,8 +408,11 @@ public class TeleOpLinearArm extends LinearOpMode {
          * it will be set automatically if = -1
          * forward = 0 degrees, right = 90, left = -90, back = 180
          */
-
-
+        
+        final double COUNTS_PER_REVOLUTION = 288;
+        final double WHEEL_DIAMETER_INCHES = 4.0;
+        final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793248);
+        
         double Angle = Angle_input + Math.PI / 4;
         double cosAngle = Math.cos(Angle);
         double sinAngle = Math.sin(Angle);
@@ -502,23 +434,18 @@ public class TeleOpLinearArm extends LinearOpMode {
             RF_LB = multiplier * sinAngle;
         }
 
-        leftfrontStartPos = H.leftfront.getCurrentPosition();
-        rightfrontStartPos = H.rightfront.getCurrentPosition();
-        leftbackStartPos = H.leftback.getCurrentPosition();
-        rightbackStartPos = H.rightback.getCurrentPosition();
-
         LF_RBtarget = (int) (LF_RB * inches * COUNTS_PER_INCH);
         RF_LBtarget = (int) (RF_LB * inches * COUNTS_PER_INCH);
 
-        H.leftfront.setTargetPosition(leftfrontStartPos + LF_RBtarget);
-        H.rightfront.setTargetPosition(rightfrontStartPos + RF_LBtarget);
-        H.leftback.setTargetPosition(leftbackStartPos + RF_LBtarget);
-        H.rightback.setTargetPosition(rightbackStartPos + LF_RBtarget);
+        H.leftfront  .setTargetPosition(H.leftfront  .getCurrentPosition() + LF_RBtarget);
+        H.rightfront .setTargetPosition(H.rightfront .getCurrentPosition() + RF_LBtarget);
+        H.leftback   .setTargetPosition(H.leftback   .getCurrentPosition() + RF_LBtarget);
+        H.rightback  .setTargetPosition(H.rightback  .getCurrentPosition() + LF_RBtarget);
 
-        H.leftfront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightfront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.leftback.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightback.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.leftfront  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.rightfront .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.leftback   .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.rightback  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
     }
