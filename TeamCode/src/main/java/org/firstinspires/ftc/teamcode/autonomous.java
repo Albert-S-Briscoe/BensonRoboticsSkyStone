@@ -156,7 +156,7 @@ public class autonomous extends LinearOpMode {
 
     private void _1A() {
 
-        arm.moveToInch(1.5);
+        arm.moveToInch(2.5);
         
         drive.setMoveInches(0,28, speed_fast, 0);
         pool.execute(drive);
@@ -192,7 +192,7 @@ public class autonomous extends LinearOpMode {
 
         arm.moveToInch(0);
 
-        drive.setMoveInches(0, 84 + 8 * blockPos, speed_fast, 90 * field_side);
+        drive.setMoveInches(0, 84 + 8 * blockPos * field_side, speed_fast, 90 * field_side);
         pool.execute(drive);
         waitForMoveDone(0);
 
@@ -227,7 +227,7 @@ public class autonomous extends LinearOpMode {
         drive.move(180, speed_fast, 0);
         sleep(150);
         drive.stop();
-        drive.move(-90, speed_fast, 0);
+        drive.move(-90 * field_side, speed_fast, 0);
         sleep(300);
         drive.stop();
         drive.setrotate(90 * field_side, speed_fast, true);
@@ -308,15 +308,16 @@ public class autonomous extends LinearOpMode {
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-    
-    
-        H.block(true);
+        sleep(500);
+        
         
         drive.setMoveInches(0, 2, speed_fast, 0);
         pool.execute(drive);
         waitForMoveDone(0);
+    
+        H.block(true);
         
-        sleep(250);
+        sleep(500);
         
         arm.moveToInch(6);
         
@@ -327,13 +328,17 @@ public class autonomous extends LinearOpMode {
     }
 
     private void placeSkystoneAndGrab() {
-    
-        arm.moveToInch(3);
-        sleep(200);
+        
+        arm.moveToInch(4);
+        sleep(400);
         drive.setrotate(0, speed_fast, true);
         pool.execute(drive);
         waitForMoveDone(0);
-        inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + 0.5;
+        if (H.lowerRange.getDistance(DistanceUnit.INCH) < 15) {
+            inches_to_move = H.lowerRange.getDistance(DistanceUnit.INCH) + 0.5;
+        } else {
+            inches_to_move = 6.5;
+        }
         drive.setMoveInches(0, inches_to_move, speed_fast, 0);
         pool.execute(drive);
         arm.moveToInch(3);
@@ -358,6 +363,8 @@ public class autonomous extends LinearOpMode {
         // 0 = MecanumWheelDriver
         // 1 = ArmDriver
         // 2 = both
+    
+        sleep(100);
 
         switch (moveDriver) {
             case 0:

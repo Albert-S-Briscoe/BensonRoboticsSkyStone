@@ -220,37 +220,39 @@ public class TeleOpLinearArm extends LinearOpMode {
                         first = true;
                         
                     }
+                    
+                    if (H.lowerRange.getDistance(DistanceUnit.INCH) < 10) {
+                        block_X = (H.sensorRange.getDistance(DistanceUnit.INCH) - sideOffset) * 1.19;
+                        block_Y = H.lowerRange.getDistance(DistanceUnit.INCH) - forwardOffset;
     
-                    block_X = (H.sensorRange.getDistance(DistanceUnit.INCH) - sideOffset) * 1.19;
-                    block_Y = H.lowerRange.getDistance(DistanceUnit.INCH) - forwardOffset;
+                        if (block_X < 20) {
+        
+                            angleToBlockPos = Math.atan2(block_X, block_Y);
+                            distanceToBlockPos = Math.hypot(block_X, block_Y) + 0.4;
+        
+                        } else {
+        
+                            angleToBlockPos = 0;
+                            distanceToBlockPos = block_Y;
+        
+                        }
     
-                    if (block_Y < 1.5) {
+                        if (distanceToBlockPos - 0.4 > tolerance) {
         
-                        angleToBlockPos = Math.atan2(block_X, block_Y);
-                        distanceToBlockPos = Math.hypot(block_X, block_Y) + 0.4;
+                            MoveInches(angleToBlockPos, distanceToBlockPos);
+                            MoveLoop(1);
         
-                    } else {
+                        } else {
         
-                        angleToBlockPos = 0;
-                        distanceToBlockPos = block_Y;
+                            H.sensorServo.setPosition(0.05);
+                            arm.moveInches(-0.75);
+                            toggle[3] = false; // grabber
+                            H.block(false);
+                            sleep(450);
+                            arm.moveToBlock(blockpos);
+                            atPos = true;
         
-                    }
-    
-                    if (distanceToBlockPos - 0.4 > tolerance) {
-        
-                        MoveInches(angleToBlockPos, distanceToBlockPos);
-                        MoveLoop(1);
-        
-                    } else {
-        
-                        H.sensorServo.setPosition(0.05);
-                        arm.moveInches(-0.75);
-                        toggle[3] = false; // grabber
-                        H.block(false);
-                        sleep(450);
-                        arm.moveToBlock(blockpos);
-                        atPos = true;
-        
+                        }
                     }
     
                 }
