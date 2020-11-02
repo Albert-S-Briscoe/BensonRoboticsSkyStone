@@ -4,7 +4,6 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -30,6 +29,11 @@ public class RobotHardware {
      *      H.[sensor/motor name].[function name]([var 1], [var 2] ...);
      */
 
+    ////////////////////////////// Constance //////////////////////////////
+
+    
+    final double COUNTS_PER_REVOLUTION_CORE = 288;
+    
     ////////////////////////////// Sensors //////////////////////////////
 
     public DistanceSensor upperRange;
@@ -41,39 +45,47 @@ public class RobotHardware {
     public Orientation    angles;
 
     ////////////////////////////// Motors //////////////////////////////
-
-    public DcMotor        leftfront;
-    public DcMotor        rightfront;
-    public DcMotor        leftback;
-    public DcMotor        rightback;
+    
     public DcMotor        vertical;
+    public DcMotor[]      driveMotor = new DcMotor[4];
+    public Servo[]        driveServo = new Servo[4];
+    public AnalogInput[]  driveAngle = new AnalogInput[4];
     public Servo          grabber;
     public Servo          Vertical;
-    public Servo          sensorServo;
+    public Servo          launcherServo;
     public Servo          centerServo;
     public Servo          L;
     public Servo          R;
 
     public void init(HardwareMap HM) {
-
         ////////////////////////////// Hardware Map //////////////////////////////
 
-        leftfront   = HM.get(DcMotor.class, "LF_drive");
-        rightfront  = HM.get(DcMotor.class, "RF_drive");
-        leftback    = HM.get(DcMotor.class, "LB_drive");
-        rightback   = HM.get(DcMotor.class, "RB_drive");
+        //driveMotor[0] = HM.get(DcMotor.class, "FL_Motor");
+        driveMotor[1] = HM.get(DcMotor.class, "FR_Motor");
+        //driveMotor[2] = HM.get(DcMotor.class, "RR_Motor");
+        //driveMotor[3] = HM.get(DcMotor.class, "RL_Motor");
+    
+        //driveServo[0] = HM.get(Servo.class, "FL_Servo");
+        //driveServo[1] = HM.get(Servo.class, "FR_Servo");
+        //driveServo[2] = HM.get(Servo.class, "RR_Servo");
+        //driveServo[3] = HM.get(Servo.class, "RL_Servo");
+    
+        //driveAngle[0] = HM.get(AnalogInput.class, "FL_Angle");
+        //driveAngle[1] = HM.get(AnalogInput.class, "FR_Angle");
+        //driveAngle[2] = HM.get(AnalogInput.class, "RR_Angle");
+        //driveAngle[3] = HM.get(AnalogInput.class, "RL_Angle");
 
-        grabber     = HM.get(Servo.class, "grabber");  // 1 = open, 0 = closed
-        sensorServo = HM.get(Servo.class, "sensor");
-        centerServo = HM.get(Servo.class, "center");
-        vertical    = HM.get(DcMotor.class, "vertical");
-        L           = HM.get(Servo.class, "GrabberLeft");
-        R           = HM.get(Servo.class, "GrabberRight");
+        //grabber     = HM.get(Servo.class, "grabber");  // 1 = open, 0 = closed
+        launcherServo = HM.get(Servo.class, "actuator");
+        //centerServo = HM.get(Servo.class, "center");
+        //vertical    = HM.get(DcMotor.class, "vertical");
+        //L           = HM.get(Servo.class, "GrabberLeft");
+        //R           = HM.get(Servo.class, "GrabberRight");
 
         //vertpos     = HM.get(AnalogInput.class, "vert_pos");
-        upperRange  = HM.get(DistanceSensor.class, "upper_range");
-        lowerRange  = HM.get(DistanceSensor.class, "lower_range");
-        sensorRange = HM.get(DistanceSensor.class, "sensor_range");
+        //upperRange  = HM.get(DistanceSensor.class, "upper_range");
+        //lowerRange  = HM.get(DistanceSensor.class, "lower_range");
+        //sensorRange = HM.get(DistanceSensor.class, "sensor_range");
         imu         = HM.get(BNO055IMU.class, "imu");
 
         ////////////////////////////// Parameters //////////////////////////////
@@ -86,20 +98,20 @@ public class RobotHardware {
         Rev2mDistanceSensor SensorTimeOfFlight1 = (Rev2mDistanceSensor) upperRange;
         Rev2mDistanceSensor SensorTimeOfFlight2 = (Rev2mDistanceSensor) lowerRange;
         Rev2mDistanceSensor SensorTimeOfFlight3 = (Rev2mDistanceSensor) sensorRange;
+    
+        //driveMotor[0].setDirection(DcMotor.Direction.FORWARD);
+        driveMotor[1].setDirection(DcMotor.Direction.REVERSE);
+        //driveMotor[2].setDirection(DcMotor.Direction.FORWARD);
+        //driveMotor[3].setDirection(DcMotor.Direction.REVERSE);
+    
+        //driveMotor[0].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor[1].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //driveMotor[2].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //driveMotor[3].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        leftfront.setDirection(DcMotor.Direction.REVERSE);
-        rightfront.setDirection(DcMotor.Direction.FORWARD);
-        leftback.setDirection(DcMotor.Direction.FORWARD);
-        rightback.setDirection(DcMotor.Direction.REVERSE);
-
-        leftfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightfront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightback.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        vertical.setDirection(DcMotor.Direction.REVERSE);
-        vertical.setTargetPosition(0);
-        vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //vertical.setDirection(DcMotor.Direction.REVERSE);
+        //vertical.setTargetPosition(0);
+        //vertical.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
     }
 

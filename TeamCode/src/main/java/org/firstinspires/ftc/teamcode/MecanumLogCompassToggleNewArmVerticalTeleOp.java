@@ -382,21 +382,17 @@ public class MecanumLogCompassToggleNewArmVerticalTeleOp extends LinearOpMode {
                 speedButton = false;
 
             }
-
+    
             if (slowDown) {
-
-                H.leftfront.setPower(leftfrontPower / 2);
-                H.rightfront.setPower(rightfrontPower / 2);
-                H.leftback.setPower(leftbackPower / 2);
-                H.rightback.setPower(rightbackPower / 2);
-
+                H.driveMotor[0].setPower(leftfrontPower / 2);
+                H.driveMotor[1].setPower(rightfrontPower / 2);
+                H.driveMotor[2].setPower(rightbackPower / 2);
+                H.driveMotor[3].setPower(leftbackPower / 2);
             } else {
-
-                H.leftfront.setPower(leftfrontPower);
-                H.rightfront.setPower(rightfrontPower);
-                H.leftback.setPower(leftbackPower);
-                H.rightback.setPower(rightbackPower);
-
+                H.driveMotor[0].setPower(leftfrontPower);
+                H.driveMotor[1].setPower(rightfrontPower);
+                H.driveMotor[2].setPower(rightbackPower);
+                H.driveMotor[3].setPower(leftbackPower);
             }
 
             ////////////////////////////// Telemetry //////////////////////////////

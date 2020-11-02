@@ -209,12 +209,12 @@ public class TeleOpLinearArm extends LinearOpMode {
                     
                     if (!first) {
         
-                        H.leftfront  .setPower(0);
-                        H.rightfront .setPower(0);
-                        H.leftback   .setPower(0);
-                        H.rightback  .setPower(0);
+                        H.driveMotor[0]  .setPower(0);
+                        H.driveMotor[1] .setPower(0);
+                        H.driveMotor[2]   .setPower(0);
+                        H.driveMotor[3]  .setPower(0);
         
-                        H.sensorServo.setPosition(1);
+                        H.launcherServo.setPosition(1);
                         sleep(500);
                         
                         first = true;
@@ -244,7 +244,7 @@ public class TeleOpLinearArm extends LinearOpMode {
         
                         } else {
         
-                            H.sensorServo.setPosition(0.05);
+                            H.launcherServo.setPosition(0.05);
                             arm.moveInches(-0.75);
                             toggle[3] = false; // grabber
                             H.block(false);
@@ -266,28 +266,28 @@ public class TeleOpLinearArm extends LinearOpMode {
                     this.LF_RB = 0;
                     this.RF_LB = 0;
 
-                    H.sensorServo.setPosition(0.05);
-                    H.leftfront  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.rightfront .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.leftback   .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    H.rightback  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.launcherServo.setPosition(0.05);
+                    H.driveMotor[0]  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.driveMotor[1] .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.driveMotor[2]   .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    H.driveMotor[3]  .setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
                 }
 
                 if (toggle[0]) {
-
-                    H.leftfront  .setPower(leftfrontPower / 2);
-                    H.rightfront .setPower(rightfrontPower / 2);
-                    H.leftback   .setPower(leftbackPower / 2);
-                    H.rightback  .setPower(rightbackPower / 2);
-
+                    
+                    H.driveMotor[0].setPower(leftfrontPower / 2);
+                    H.driveMotor[1].setPower(rightfrontPower / 2);
+                    H.driveMotor[2].setPower(rightbackPower / 2);
+                    H.driveMotor[3].setPower(leftbackPower / 2);
+                    
                 } else {
-
-                    H.leftfront  .setPower(leftfrontPower);
-                    H.rightfront .setPower(rightfrontPower);
-                    H.leftback   .setPower(leftbackPower);
-                    H.rightback  .setPower(rightbackPower);
-
+                    
+                    H.driveMotor[0].setPower(leftfrontPower);
+                    H.driveMotor[1].setPower(rightfrontPower);
+                    H.driveMotor[2].setPower(rightbackPower);
+                    H.driveMotor[3].setPower(leftbackPower);
+                
                 }
 
             }
@@ -439,15 +439,15 @@ public class TeleOpLinearArm extends LinearOpMode {
         LF_RBtarget = (int) (LF_RB * inches * COUNTS_PER_INCH);
         RF_LBtarget = (int) (RF_LB * inches * COUNTS_PER_INCH);
 
-        H.leftfront  .setTargetPosition(H.leftfront  .getCurrentPosition() + LF_RBtarget);
-        H.rightfront .setTargetPosition(H.rightfront .getCurrentPosition() + RF_LBtarget);
-        H.leftback   .setTargetPosition(H.leftback   .getCurrentPosition() + RF_LBtarget);
-        H.rightback  .setTargetPosition(H.rightback  .getCurrentPosition() + LF_RBtarget);
+        H.driveMotor[0]  .setTargetPosition(H.driveMotor[0]  .getCurrentPosition() + LF_RBtarget);
+        H.driveMotor[1] .setTargetPosition(H.driveMotor[1] .getCurrentPosition() + RF_LBtarget);
+        H.driveMotor[2]  .setTargetPosition(H.driveMotor[2]  .getCurrentPosition() + LF_RBtarget);
+        H.driveMotor[3]   .setTargetPosition(H.driveMotor[3]   .getCurrentPosition() + RF_LBtarget);
 
-        H.leftfront  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightfront .setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.leftback   .setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightback  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[0]  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[1] .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[2]   .setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[3]  .setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
     }
@@ -482,10 +482,10 @@ public class TeleOpLinearArm extends LinearOpMode {
             }
         }
 
-        H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
-        H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
-        H.leftback.setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
-        H.rightback.setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+        H.driveMotor[0].setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
+        H.driveMotor[1].setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
+        H.driveMotor[2].setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+        H.driveMotor[3].setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
     }
 
     private double FindDegOffset(double DegCurrent, double TargetDeg) {

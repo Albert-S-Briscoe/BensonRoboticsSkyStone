@@ -175,10 +175,10 @@ public class MecanumWheelDriver implements Runnable {
             rightbackPower    = rightbackPower/rTotal;
         }
 
-        H.leftfront.  setPower(leftfrontPower);
-        H.rightfront. setPower(rightfrontPower);
-        H.leftback.   setPower(leftbackPower);
-        H.rightback.  setPower(rightbackPower);
+        H.driveMotor[0].  setPower(leftfrontPower);
+        H.driveMotor[1]. setPower(rightfrontPower);
+        H.driveMotor[2].  setPower(rightbackPower);
+        H.driveMotor[3].   setPower(leftbackPower);
     }
 
     void moveWithGyro(double Angle_Degrees, double Speed, double agl_frwd) {
@@ -241,10 +241,10 @@ public class MecanumWheelDriver implements Runnable {
             }
         }
 
-        H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * Speed, -1, 1));
-        H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * Speed, -1, 1));
-        H.leftback.setPower(Range.clip(leftbackPower * multiplier * Speed, -1, 1));
-        H.rightback.setPower(Range.clip(rightbackPower * multiplier * Speed, -1, 1));
+        H.driveMotor[0].setPower(Range.clip(leftfrontPower * multiplier * Speed, -1, 1));
+        H.driveMotor[1].setPower(Range.clip(rightfrontPower * multiplier * Speed, -1, 1));
+        H.driveMotor[2].setPower(Range.clip(rightbackPower * multiplier * Speed, -1, 1));
+        H.driveMotor[3].setPower(Range.clip(leftbackPower * multiplier * Speed, -1, 1));
     }
 
     void stop() {
@@ -254,20 +254,20 @@ public class MecanumWheelDriver implements Runnable {
 
         stop = true;
         
-        H.leftfront.  setPower(0);
-        H.rightfront. setPower(0);
-        H.leftback.   setPower(0);
-        H.rightback.  setPower(0);
+        H.driveMotor[0].  setPower(0);
+        H.driveMotor[1]. setPower(0);
+        H.driveMotor[2].   setPower(0);
+        H.driveMotor[3].  setPower(0);
     
-        H.leftfront.setTargetPosition(H.leftfront.getCurrentPosition());
-        H.rightfront.setTargetPosition(H.rightfront.getCurrentPosition());
-        H.leftback.setTargetPosition(H.leftback.getCurrentPosition());
-        H.rightback.setTargetPosition(H.rightback.getCurrentPosition());
+        H.driveMotor[0].setTargetPosition(H.driveMotor[0].getCurrentPosition());
+        H.driveMotor[1].setTargetPosition(H.driveMotor[1].getCurrentPosition());
+        H.driveMotor[2].setTargetPosition(H.driveMotor[2].getCurrentPosition());
+        H.driveMotor[3].setTargetPosition(H.driveMotor[3].getCurrentPosition());
 
-        H.leftfront.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[0].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[1]. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[2].   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[3].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -308,17 +308,17 @@ public class MecanumWheelDriver implements Runnable {
 
         if (reletiveToStart) {
 
-            H.leftfront.setTargetPosition(leftfrontStartPos + LF_RBtarget);
-            H.rightfront.setTargetPosition(rightfrontStartPos + RF_LBtarget);
-            H.leftback.setTargetPosition(leftbackStartPos + RF_LBtarget);
-            H.rightback.setTargetPosition(rightbackStartPos + LF_RBtarget);
+            H.driveMotor[0].setTargetPosition(leftfrontStartPos + LF_RBtarget);
+            H.driveMotor[1].setTargetPosition(rightfrontStartPos + RF_LBtarget);
+            H.driveMotor[2].setTargetPosition(rightbackStartPos + LF_RBtarget);
+            H.driveMotor[3].setTargetPosition(leftbackStartPos + RF_LBtarget);
 
         } else {
 
-            H.leftfront.setTargetPosition(H.leftfront.getCurrentPosition() + LF_RBtarget);
-            H.rightfront.setTargetPosition(H.rightfront.getCurrentPosition() + RF_LBtarget);
-            H.leftback.setTargetPosition(H.leftback.getCurrentPosition() + RF_LBtarget);
-            H.rightback.setTargetPosition(H.rightback.getCurrentPosition() + LF_RBtarget);
+            H.driveMotor[0].setTargetPosition(H.driveMotor[0].getCurrentPosition() + LF_RBtarget);
+            H.driveMotor[1].setTargetPosition(H.driveMotor[1].getCurrentPosition() + RF_LBtarget);
+            H.driveMotor[2].setTargetPosition(H.driveMotor[2].getCurrentPosition() + LF_RBtarget);
+            H.driveMotor[3].setTargetPosition(H.driveMotor[3].getCurrentPosition() + RF_LBtarget);
 
         }
 
@@ -367,25 +367,25 @@ public class MecanumWheelDriver implements Runnable {
             RF_LB = multiplier * sinAngle;
         }
 
-        leftfrontStartPos = H.leftfront.getCurrentPosition();
-        rightfrontStartPos = H.rightfront.getCurrentPosition();
-        leftbackStartPos = H.leftback.getCurrentPosition();
-        rightbackStartPos = H.rightback.getCurrentPosition();
+        leftfrontStartPos = H.driveMotor[0].getCurrentPosition();
+        rightfrontStartPos = H.driveMotor[1].getCurrentPosition();
+        rightbackStartPos = H.driveMotor[2].getCurrentPosition();
+        leftbackStartPos = H.driveMotor[3].getCurrentPosition();
 
         LF_RBtarget = (int)(LF_RB * inches * COUNTS_PER_INCH);
         RF_LBtarget = (int)(RF_LB * inches * COUNTS_PER_INCH);
 
-        H.leftfront.  setTargetPosition(leftfrontStartPos + LF_RBtarget);
-        H.rightfront. setTargetPosition(rightfrontStartPos + RF_LBtarget);
-        H.leftback.   setTargetPosition(leftbackStartPos + RF_LBtarget);
-        H.rightback.  setTargetPosition(rightbackStartPos + LF_RBtarget);
+        H.driveMotor[0].  setTargetPosition(leftfrontStartPos + LF_RBtarget);
+        H.driveMotor[1]. setTargetPosition(rightfrontStartPos + RF_LBtarget);
+        H.driveMotor[2].  setTargetPosition(rightbackStartPos + LF_RBtarget);
+        H.driveMotor[3].   setTargetPosition(leftbackStartPos + RF_LBtarget);
 
-        H.leftfront.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightfront. setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.leftback.   setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        H.rightback.  setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[0].  setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[1]. setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[2].   setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        H.driveMotor[3].  setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        while (H.leftfront.isBusy() && H.rightfront.isBusy() && H.leftback.isBusy() && H.rightback.isBusy() && !stop) {
+        while (H.driveMotor[0].isBusy() && H.driveMotor[1].isBusy() && H.driveMotor[2].isBusy() && H.driveMotor[3].isBusy() && !stop) {
             if (selfcorrect) {
                 offset = FindDegOffset(H.getheading(), agl_frwd + 180);
 
@@ -408,31 +408,31 @@ public class MecanumWheelDriver implements Runnable {
                     }
                 }
 
-                H.leftfront.setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
-                H.rightfront.setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
-                H.leftback.setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
-                H.rightback.setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+                H.driveMotor[0].setPower(Range.clip(leftfrontPower * multiplier * speed, -1, 1));
+                H.driveMotor[1].setPower(Range.clip(rightfrontPower * multiplier * speed, -1, 1));
+                H.driveMotor[2].setPower(Range.clip(rightbackPower * multiplier * speed, -1, 1));
+                H.driveMotor[3].setPower(Range.clip(leftbackPower * multiplier * speed, -1, 1));
 
             } else {
 
-                H.leftfront.setPower(LF_RB * speed);
-                H.rightfront.setPower(RF_LB * speed);
-                H.leftback.setPower(RF_LB * speed);
-                H.rightback.setPower(LF_RB * speed);
+                H.driveMotor[0].setPower(LF_RB * speed);
+                H.driveMotor[1].setPower(RF_LB * speed);
+                H.driveMotor[2].setPower(LF_RB * speed);
+                H.driveMotor[3].setPower(RF_LB * speed);
 
             }
 
         }
 
-        H.leftfront.  setPower(0);
-        H.rightfront. setPower(0);
-        H.leftback.   setPower(0);
-        H.rightback.  setPower(0);
+        H.driveMotor[0].  setPower(0);
+        H.driveMotor[1]. setPower(0);
+        H.driveMotor[2].   setPower(0);
+        H.driveMotor[3].  setPower(0);
 
-        H.leftfront.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[0].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[1]. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[2].   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        H.driveMotor[3].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
 
@@ -488,17 +488,17 @@ public class MecanumWheelDriver implements Runnable {
             speed = Range.clip( Math.abs(offset / rampDownAngl), speedmin, MaxSpeed);
             drect = (int)Range.clip(offset * 100, -1, 1);
 
-            H.leftfront.  setPower(-speed * drect);
-            H.rightfront. setPower(speed * drect);
-            H.leftback.   setPower(-speed * drect);
-            H.rightback.  setPower(speed * drect);
+            H.driveMotor[0].  setPower(-speed * drect);
+            H.driveMotor[1]. setPower(speed * drect);
+            H.driveMotor[2].  setPower(speed * drect);
+            H.driveMotor[3].   setPower(-speed * drect);
 
         } while (Math.abs(offset) > turnAccrate && !stop);
 
-        H.leftfront.  setPower(0);
-        H.rightfront. setPower(0);
-        H.leftback.   setPower(0);
-        H.rightback.  setPower(0);
+        H.driveMotor[0].  setPower(0);
+        H.driveMotor[1]. setPower(0);
+        H.driveMotor[2].  setPower(0);
+        H.driveMotor[3].   setPower(0);
 
         /*
         int Lefttarget = (int)(Degrees * COUNTS_PER_DEGREE);
@@ -560,20 +560,20 @@ public class MecanumWheelDriver implements Runnable {
          */
 
         if (On) {
-            H.leftfront.  setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            H.rightfront. setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            H.leftback.   setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            H.rightback.  setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            H.driveMotor[0].  setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            H.driveMotor[1]. setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            H.driveMotor[2].  setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            H.driveMotor[3].   setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-            H.leftfront.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            H.rightfront. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            H.leftback.   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            H.rightback.  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            H.driveMotor[0].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            H.driveMotor[1]. setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            H.driveMotor[2].  setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            H.driveMotor[3].   setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         } else {
-            H.leftfront.  setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            H.rightfront. setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            H.leftback.   setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            H.rightback.  setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            H.driveMotor[0].  setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            H.driveMotor[1]. setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            H.driveMotor[2].  setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            H.driveMotor[3].   setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
     }
 

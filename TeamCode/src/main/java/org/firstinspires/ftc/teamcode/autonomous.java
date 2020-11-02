@@ -146,10 +146,10 @@ public class autonomous extends LinearOpMode {
         arm.stop();
         drive.stop();
         pool.shutdownNow();
-        H.leftfront.setPower(0);
-        H.rightfront.setPower(0);
-        H.leftback.setPower(0);
-        H.rightback.setPower(0);
+        H.driveMotor[0].setPower(0);
+        H.driveMotor[1].setPower(0);
+        H.driveMotor[2].setPower(0);
+        H.driveMotor[3].setPower(0);
     }
 
 

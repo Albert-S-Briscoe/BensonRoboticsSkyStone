@@ -84,7 +84,7 @@ public class LinearArmDriver implements Runnable {
          *    moveToBlock(int);
          */
 
-        final double COUNTS_PER_REVOLUTION = 1120; // maybe 2240 or 560
+        final double COUNTS_PER_REVOLUTION = 1120;
         final double WHEEL_DIAMETER_INCHES = 1.495;
         final double COUNTS_PER_INCH = COUNTS_PER_REVOLUTION / (WHEEL_DIAMETER_INCHES * 3.141592653589793);
         int target;
